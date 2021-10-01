@@ -1,0 +1,27 @@
+{% extends 'base_template/base.html' %}
+
+{% block title %}
+<title>Not Found</title>
+{% endblock %}
+
+{% block content %}
+
+
+<section class="py-4">
+                <div class="container px-5">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8 col-xxl-6">
+                            <div class="text-center my-5">
+                                <h1 class="fw-bolder mb-3">PAGE NOT FOUND (404)</h1>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="container">
+                    <div class="text-center">
+                        <img class="rounded" src="{{ url_for('static', filename='img/content/Arbiter-Vildred-full.png') }}" alt="..." />
+                    </div>
+                </div>
+            </section>
+
+{% endblock %}

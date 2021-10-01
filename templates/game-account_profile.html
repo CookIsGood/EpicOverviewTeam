@@ -1,0 +1,210 @@
+{% extends 'base_template/base.html' %}
+
+{% block title %}
+<title>Game account profile</title>
+{% endblock %}
+
+{% block links %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.1/css/dataTables.bootstrap4.min.css"/>
+
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+
+    {% for msg in get_flashed_messages() %}
+        {% if msg %}
+        <div class="container mb-3 mt-3 py-4">
+        <div class="alert alert-info py-3" role="alert">
+            {{ msg }}
+        </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+
+
+    <div class="container mb-3 mt-3 py-4">
+        <h2>Game account information</h2>
+        {% if content %}
+        {% set gameaccounts_info =  content["gameaccounts_info"] %}
+    <p>Name: {{ gameaccounts_info[0]['name'] }}</p>
+        <p>User owner: {{ gameaccounts_info[0]['user_owner'] }}</p>
+        <p>Garaunteed roll: {{ gameaccounts_info[0]['garaunteed_roll'] }}</p>
+        <p>Rate: {{ gameaccounts_info[0]['rate'] }}</p>
+        <p>Price: {{ gameaccounts_info[0]['price'] }}</p>
+        <p>Status code: {{ gameaccounts_info[0]['status_code'] }}</p>
+        <p>Created: {{ gameaccounts_info[0]['created_at'] }}</p>
+    {% endif %}
+    </div>
+    <div class="container mb-3 mt-3 py-4">
+        <div class="row justify-content-end">
+        <div class="col-auto">
+            <form method="get" action="{{ url_for('change_game_account_form', user_login=user_login, name_account=name_account) }}">
+                <button class="btn btn-primary px-10 me-sm-10" id="change_form" type="submit" name="change_form">Change settings</button>
+             </form>
+        </div>
+        <div class="col-auto">
+            <form method="post" action="{{ url_for('deleteGameAccount', user_login=user_login, name_account=name_account) }}">
+                <button class="btn btn-danger px-10 me-sm-10" id="deleteAccount" type="submit" name="deleteAccount">Delete Account</button>
+            </form>
+        </div>
+    </div>
+    </div>
+
+    <div class="container">
+  <div class="row">
+      <div class="col-sm">
+          <h2>Availible heroes:</h2>
+    <div class="container mb-3 mt-3">
+            <form method="post" action="{{ url_for('add_card_hero', user_login=user_login, name_account=name_account) }}">
+
+        <table class="table table-bordered myDataTable" style="width:100%">
+            <thead>
+                <tr>
+                    <th scope="col"></th>
+                   <th scope="col">Hero</th>
+                    <th scope="col">Star</th>
+                    <th scope="col">Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for hero in content["heroes"] %}
+            <tr>
+                <td>
+                    <input type="checkbox" name="checkbox_hero" value="{{ hero['name'] }}">
+                </td>
+                <td>{{ hero['name'] }}</td>
+                <td>{{ hero['star'] }}</td>
+                <td>{{ hero['rate'] }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+                <button class="btn btn-success px-10 me-sm-10" type="submit" name="actionCard" value="addCard">Add Card</button>
+                </form>
+
+    </div>
+          </div>
+
+<div class="col-sm">
+    <h2>Availible artifacts:</h2>
+        <div class="container mb-3 mt-3">
+            <form method="post" action="{{ url_for('add_card_artifact', user_login=user_login, name_account=name_account) }}">
+        <table class="table table-bordered myDataTable" style="width:100%">
+            <thead>
+                <tr>
+                    <th scope="col"></th>
+                   <th scope="col">Artifact</th>
+                    <th scope="col">Star</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for artifact in content["artifacts"] %}
+            <tr>
+                <td>
+                    <input type="checkbox" name="checkbox_artifact" value="{{ artifact['name'] }}">
+                </td>
+                <td>{{ artifact['name'] }}</td>
+                <td>{{ artifact['star'] }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+             <button class="btn btn-success px-10 me-sm-10" type="submit" name="actionCard" value="addCard">Add Card</button>
+               </form>
+    </div>
+    </div>
+
+  </div>
+    </div>
+
+<div class="container">
+  <div class="row">
+      <div class="col-sm">
+          <h2>Heroes on account:</h2>
+    <div class="container mb-3 mt-3 py-3">
+        <form method="post" action="{{ url_for('delete_card_hero', user_login=user_login, name_account=name_account) }}">
+            <table class="table table-bordered myDataTable" style="width:100%">
+            <thead>
+                <tr>
+                    <th scope="col"></th>
+                   <th scope="col">Hero</th>
+                    <th scope="col">Star</th>
+                    <th scope="col">Rate</th>
+                    <th scope="col">Added</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for gameaccount_info in content["gameaccounts_info"] %}
+            {% for item in gameaccount_info["heroes"] %}
+            <tr>
+                <td>
+                    <input type="checkbox" name="have_checkbox_hero" value="{{ item['name'] }}">
+                </td>
+                <td>{{ item['name'] }}</td>
+                <td>{{ item['star'] }}</td>
+                <td>{{ item['rate'] }}</td>
+                <td>{{ item['added'] }}</td>
+            </tr>
+            {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+            <button class="btn btn-danger px-10 me-sm-10" type="submit" name="actionCard" value="deleteCard">Delete Card</button>
+            </form>
+    </div>
+      </div>
+
+      <div class="col-sm">
+          <h2>Artifacts on account:</h2>
+    <div class="container mb-3 mt-3 py-3">
+         <form method="post" action="{{ url_for('delete_card_artifact', user_login=user_login, name_account=name_account) }}">
+            <table class="table table-bordered myDataTable" style="width:100%">
+            <thead>
+                <tr>
+                    <th scope="col"></th>
+                   <th scope="col">Artifact</th>
+                    <th scope="col">Rate</th>
+                    <th scope="col">Added</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for gameaccount_info in content["gameaccounts_info"] %}
+            {% for item in gameaccount_info["artifacts"] %}
+            <tr>
+                <td>
+                    <input type="checkbox" name="have_checkbox_artifact" id="{{ item['name'] }}" value="{{ item['name'] }}">
+                </td>
+                <td>{{ item['name'] }}</td>
+                <td>{{ item['star'] }}</td>
+                <td>{{ item['added'] }}</td>
+            </tr>
+                    {% endfor %}
+            {% endfor %}
+            </tbody>
+        </table>
+            <button class="btn btn-danger px-10 me-sm-10" type="submit" name="actionCard" value="deleteCard">Delete Card</button>
+            </form>
+    </div>
+          </div>
+  </div>
+</div>
+
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+        <script src="https://cdn.datatables.net/1.11.1/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.11.1/js/dataTables.bootstrap5.min.js"></script>
+
+        <script>
+                $('.myDataTable').DataTable({
+
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]]
+               });
+        </script>
+{% endblock %}
