@@ -153,6 +153,7 @@ def create_hero_confirm(token):
         data = s.loads(token, salt='confirm-create-hero', max_age=60 * 5)
         if Hero().create_hero(user_login=data['user'], name_hero=data['name'], stars_hero=data['star'],
                               rate_hero=data['rate']):
+            flash("The hero was created successfully!")
             return redirect(url_for('admin_login'))
         else:
             return redirect(url_for('create_hero'))
@@ -194,6 +195,7 @@ def create_artifact_confirm(token):
         if Artifact().create_artifact(user_login=data['user'],
                                       name_artifact=data['name'],
                                       stars_artifact=data['star']):
+            flash("The artifact was created successfully!")
             return redirect(url_for('admin_login'))
         else:
             return redirect(url_for('create_artifact'))
