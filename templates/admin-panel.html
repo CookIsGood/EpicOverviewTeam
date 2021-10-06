@@ -54,12 +54,22 @@
         <div class="row">
             <div class="col-auto">
                 <form method="get" action="{{ url_for('create_role') }}">
-                    <button class="btn btn-warning px-10 me-sm-10" id="addRole" type="submit" name="addRole">Create new role</button>
+                    <button class="btn btn-warning px-10 me-sm-10" type="submit">Create new role</button>
                 </form>
             </div>
             <div class="col-auto">
                 <form method="get" action="{{ url_for('create_status') }}">
-                    <button class="btn btn-warning px-10 me-sm-10" id="addStatus" type="submit" name="addStatus">Create new status</button>
+                    <button class="btn btn-warning px-10 me-sm-10" type="submit">Create new status</button>
+                </form>
+            </div>
+            <div class="col-auto">
+                <form method="get" action="{{ url_for('create_hero') }}">
+                    <button class="btn btn-warning px-10 me-sm-10" type="submit">Create new hero</button>
+                </form>
+            </div>
+            <div class="col-auto">
+                <form method="get" action="{{ url_for('create_artifact') }}">
+                    <button class="btn btn-warning px-10 me-sm-10" type="submit">Create new artifact</button>
                 </form>
             </div>
         </div>

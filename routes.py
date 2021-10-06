@@ -9,8 +9,8 @@ Role().add_standart_role()
 User().create_superuser()
 RoleAssignment().add_superuser_role()
 Status().add_standart_statuses()
-Hero().add_hero()
-Artifact().add_artifact()
+Hero().add_hero_from_json()
+Artifact().add_artifact_from_json()
 
 
 @app.route('/')
@@ -62,17 +62,16 @@ def forgot_password():
         user = User.query.filter_by(email=email).first()
         if user:
             if not check_password_hash(user.password, password):
-                token_for_email = s.dumps(email, salt='confirm-change-email')
-                token_for_password = s.dumps(password, salt='confirm-change-password')
+                token = s.dumps({'email': email,
+                                 'password': password},
+                                salt='confirm-change-password')
                 msg = Message('Confirm change password', sender=email, recipients=[email])
-                link = url_for('forgot_password_confirm', token=token_for_email, password=token_for_password,
-                               _external=True)
+                link = url_for('forgot_password_confirm', token=token, _external=True)
                 msg.body = f'Your link is {link}'
                 mail.send(msg)
                 flash(f"A confirmation email has been sent to the address {email}")
                 return redirect(url_for('forgot_password'))
             else:
-                login_user(user)
                 flash(f"You have entered the current password for {email}")
                 return redirect(url_for('forgot_password'))
         else:
@@ -82,19 +81,18 @@ def forgot_password():
     return render_template('forgot-password.html', form=form)
 
 
-@app.route('/forgot-password/confirm/<token>/<password>', methods=['GET', 'POST'])
-def forgot_password_confirm(token, password):
+@app.route('/forgot-password/confirm/<token>', methods=['GET', 'POST'])
+def forgot_password_confirm(token):
     try:
-        email = s.loads(token, salt='confirm-change-email', max_age=60 * 5)
-        password = s.loads(password, salt='confirm-change-password', max_age=60 * 5)
-        if User().change_password(email, password):
-            flash(f"On the mailbox {email} the password was changed.")
+        data = s.loads(token, salt='confirm-change-password', max_age=60 * 5)
+        if User().change_password(data['email'], data['password']):
+            flash(f"On the mailbox {data['email']} the password was changed.")
         else:
             flash("Something went wrong...")
     except SignatureExpired:
         flash("Link expired :(")
-        return render_template("login_user.html")
-    return render_template('login_user.html')
+        return redirect(url_for('signin'))
+    return redirect(url_for('signin'))
 
 
 @app.route('/admin-panel', methods=['GET', 'POST'])
@@ -117,6 +115,91 @@ def admin_login():
 
         return render_template("admin-panel.html", content=content)
     return render_template('errors/error404.html'), 404
+
+@app.route('/admin-panel/add-new-hero-form', methods=['GET', 'POST'])
+@login_required
+def create_hero():
+    user = User.query.filter_by(id=current_user.get_id()).first()
+    if user.role.filter_by(role='Admin').first():
+        form = CreateHero()
+        if form.validate_on_submit():
+            name = form.name_hero.data
+            star = form.star_hero.data
+            rate = form.rate_hero.data
+
+            token = s.dumps({'name': name,
+                             'star': star,
+                             'rate': rate,
+                             'user': user.login},
+                            salt='confirm-create-hero')
+            msg = Message('Confirm create hero', sender=email, recipients=[user.email])
+            link = url_for('create_hero_confirm', token=token, _external=True)
+            msg.body = f'New character name: {name}\n' \
+                       f'Number of stars: {star}\n' \
+                       f'Rating: {rate} \n' \
+                       f'Please double-check the correctness of the entered data! \nIf you notice that the data ' \
+                       f'are incorrect, then ignore this letter and repeat the character creation procedure again.\n' \
+                       f'Your link is:\n{link}'
+            mail.send(msg)
+            flash(f"A confirmation letter for adding a hero was sent to {user.email}")
+            return redirect(url_for('admin_login'))
+        return render_template('create-hero.html', form=form)
+    return render_template('errors/error404.html'), 404
+
+
+@app.route('/admin-panel/confirm-create-hero/<token>', methods=['GET', 'POST'])
+def create_hero_confirm(token):
+    try:
+        data = s.loads(token, salt='confirm-create-hero', max_age=60 * 5)
+        if Hero().create_hero(user_login=data['user'], name_hero=data['name'], stars_hero=data['star'],
+                              rate_hero=data['rate']):
+            return redirect(url_for('admin_login'))
+        else:
+            return redirect(url_for('create_hero'))
+    except SignatureExpired:
+        flash("Link expired :(")
+        return redirect(url_for('admin_login'))
+
+@app.route('/admin-panel/add-new-artifact-form', methods=['GET', 'POST'])
+@login_required
+def create_artifact():
+    user = User.query.filter_by(id=current_user.get_id()).first()
+    if user.role.filter_by(role='Admin').first():
+        form = CreateArtifact()
+        if form.validate_on_submit():
+            name = form.name_artifact.data
+            star = form.star_artifact.data
+            token = s.dumps({'name': name,
+                             'star': star,
+                             'user': user.login},
+                            salt='confirm-create-artifact')
+            msg = Message('Confirm create artifact', sender=email, recipients=[user.email])
+            link = url_for('create_artifact_confirm', token=token, _external=True)
+            msg.body = f'New artifact name: {name}\n' \
+                       f'Number of stars: {star}\n' \
+                       f'Please double-check the correctness of the entered data! \nIf you notice that the data ' \
+                       f'are incorrect, then ignore this letter and repeat the artifact creation procedure again.\n' \
+                       f'Your link is:\n{link}'
+            mail.send(msg)
+            flash(f"A confirmation letter for adding a artifact was sent to {user.email}")
+            return redirect(url_for('admin_login'))
+        return render_template('create-artifact.html', form=form)
+    return render_template('errors/error404.html'), 404
+
+
+@app.route('/admin-panel/confirm-create-artifact/<token>', methods=['GET', 'POST'])
+def create_artifact_confirm(token):
+    try:
+        data = s.loads(token, salt='confirm-create-artifact', max_age=60 * 5)
+        if Artifact().create_artifact(user_login=data['user'],
+                                      name_artifact=data['name'],
+                                      stars_artifact=data['star']):
+            return redirect(url_for('admin_login'))
+        else:
+            return redirect(url_for('create_artifact'))
+    except SignatureExpired:
+        flash("Link expired :(")
+        return redirect(url_for('admin_login'))
 
 
 @app.route('/admin-panel/hero-img-upload', methods=['GET', 'POST'])
@@ -342,13 +425,13 @@ def signup():
 
         if not User.query.filter_by(email=email).first() and not User.query.filter_by(login=login).first() and \
                 not User.query.filter_by(discord_nickname=discord_nickname).first():
-            token_for_email = s.dumps(email, salt='confirm-signup-email')
-            token_for_discord_nickname = s.dumps(discord_nickname, salt='confirm-signup-discord_nickname')
-            token_for_login = s.dumps(login, salt='confirm-signup-login')
-            token_for_password = s.dumps(password, salt='confirm-signup-password')
+            token = s.dumps({'email': email,
+                             'discord_nickname': discord_nickname,
+                             'login': login,
+                             'password': password},
+                            salt='confirm-signup')
             msg = Message('Confirm your email address', sender=email, recipients=[email])
-            link = url_for('confirm_signup', token=token_for_email, password=token_for_password,
-                           login=token_for_login, discord_nickname=token_for_discord_nickname, _external=True)
+            link = url_for('confirm_signup', token=token, _external=True)
             msg.body = f'Your link is {link}'
             mail.send(msg)
             flash(f"A confirmation email has been sent to the address {email}")
@@ -360,17 +443,15 @@ def signup():
     return render_template('register_user.html', form=form)
 
 
-@app.route('/signup/confirm/<token>/<password>/<login>/<discord_nickname>', methods=['GET', 'POST'])
-def confirm_signup(token, password, login, discord_nickname):
-    form = LoginForm()
+@app.route('/signup/confirm/<token>', methods=['GET', 'POST'])
+def confirm_signup(token):
     try:
-        email = s.loads(token, salt='confirm-signup-email', max_age=60 * 5)
-        login = s.loads(login, salt='confirm-signup-login', max_age=60 * 5)
-        discord_nickname = s.loads(discord_nickname, salt='confirm-signup-discord_nickname', max_age=60 * 5)
-        password = s.loads(password, salt='confirm-signup-password', max_age=60 * 5)
-
-        if not User.query.filter_by(email=email).first():
-            user = User().register(email=email, login=login, password=password, discord_nickname=discord_nickname)
+        data = s.loads(token, salt='confirm-signup', max_age=60 * 5)
+        if not User.query.filter_by(email=data['email']).first():
+            user = User().register(email=data['email'],
+                                   login=data['login'],
+                                   password=data['password'],
+                                   discord_nickname=data['discord_nickname'])
             if user:
                 flash(f"You have successfully registered!")
             else:
@@ -379,8 +460,8 @@ def confirm_signup(token, password, login, discord_nickname):
             flash("A user with this email already exists!")
     except SignatureExpired:
         flash("Link expired :(")
-        return render_template("login_user.html", form=form)
-    return render_template('login_user.html', form=form)
+        return redirect(url_for('signin'))
+    return redirect(url_for('signin'))
 
 
 @app.route('/logout/', methods=['GET', 'POST'])
@@ -563,11 +644,11 @@ def deleteGameAccount(user_login, name_account):
         user = User.query.filter_by(id=current_user.get_id()).first()
         name = user.possessions.filter_by(name=name_account).first().name
         if user.possessions.filter_by(name=name_account).first():
-            token_for_login = s.dumps(user.login, salt='confirm-delete-login')
-            token_for_name = s.dumps(name, salt='confirm-delete-name')
+            token = s.dumps({'login': user.login,
+                             'name': name},
+                            salt='confirm-delete')
             msg = Message(f'Confirm delete account {name}', sender=email, recipients=[user.email])
-            link = url_for('deleteGameAccount_confirm', token=token_for_login, name=token_for_name,
-                           _external=True)
+            link = url_for('deleteGameAccount_confirm', token=token, _external=True)
             msg.body = f'Your link is {link}'
             mail.send(msg)
             flash(f"A confirmation email has been sent to the address {user.email}")
@@ -579,19 +660,17 @@ def deleteGameAccount(user_login, name_account):
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/delete-account/confirm/<token>/<name>', methods=['GET', 'POST'])
-def deleteGameAccount_confirm(token, name):
+@app.route('/delete-account/confirm/<token>', methods=['GET', 'POST'])
+def deleteGameAccount_confirm(token):
     try:
-        login = s.loads(token, salt='confirm-delete-login', max_age=60 * 5)
-        name = s.loads(name, salt='confirm-delete-name', max_age=60 * 5)
-        user = User.query.filter_by(id=current_user.get_id()).first()
-        if GameAccount().delete(user_owner=login,
-                                name=name):
+        data = s.loads(token, salt='confirm-delete', max_age=60 * 5)
+        if GameAccount().delete(user_owner=data['login'],
+                                name=data['name']):
             flash("The account has been successfully deleted!")
-            return redirect(url_for('profile', user_login=user.login))
+            return redirect(url_for('profile', user_login=data['login']))
         else:
             flash("The game account could not be deleted...")
-            return redirect(url_for('profile', user_login=user.login))
+            return redirect(url_for('profile', user_login=data['login']))
     except SignatureExpired:
         flash("Link expired :(")
         return render_template("game-account_profile.html")

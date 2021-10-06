@@ -46,7 +46,7 @@ class User(AbstUser, db.Model, UserMixin):
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(25), unique=True, nullable=False)
+    email = db.Column(db.String(50), unique=True, nullable=False)
     login = db.Column(db.String(10), unique=True, nullable=False)
     discord_nickname = db.Column(db.String(25), unique=False, nullable=False)
     password = db.Column(db.Text, unique=False, nullable=False)
@@ -191,7 +191,7 @@ class StatusAssignment(db.Model):
     user_login - username from the user table
     """
     id = db.Column(db.Integer, primary_key=True)
-    status = db.Column(db.Text, db.ForeignKey('status.status'))
+    status = db.Column(db.String(20), db.ForeignKey('status.status'))
     user_login = db.Column(db.String(10), db.ForeignKey('user.login'))
 
     def add_status_user(self, login_user: str, status: str):
@@ -264,7 +264,7 @@ class RoleAssignment(db.Model):
     user_login - username from the User table
     """
     id = db.Column(db.Integer, primary_key=True)
-    role = db.Column(db.Text, db.ForeignKey('role.role'))
+    role = db.Column(db.String(20), db.ForeignKey('role.role'))
     user_login = db.Column(db.String(10), db.ForeignKey('user.login'))
 
     def add_superuser_role(self):
@@ -360,7 +360,7 @@ class Status(db.Model):
         Banned - the banned user no longer displays game accounts in the general Board
     """
     id = db.Column(db.Integer, primary_key=True)
-    status = db.Column(db.Text, unique=True, nullable=False)
+    status = db.Column(db.String(20), unique=True, nullable=False)
 
     def show_statuses(self):
         """This function shows all possible statuses
@@ -449,7 +449,7 @@ class Role(db.Model):
     role - a role that can be assigned to a user
     """
     id = db.Column(db.Integer, primary_key=True)
-    role = db.Column(db.Text, unique=True, nullable=False)
+    role = db.Column(db.String(20), unique=True, nullable=False)
 
     def show_roles(self):
         """Method for viewing all roles
@@ -553,7 +553,7 @@ class GameAccount(db.Model):
     """
 
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(5), unique=True, nullable=False)
+    name = db.Column(db.String(10), unique=True, nullable=False)
     garaunteed_roll = db.Column(db.String(3), nullable=False)
     price = db.Column(db.Integer, nullable=False)
     rate = db.Column(db.Float, default=0.0, nullable=False)
@@ -729,8 +729,9 @@ class GameAccount(db.Model):
                 status = None
             else:
                 status = status.status
-            if gameaccount[i].rate >= 0.4 and gameaccount[i].status_code != 'SOLD' and status != 'Banned':
-                # 0.4 - тот рейтинг, с которого надо показывать все аккаунты
+            if gameaccount[i].rate >= 1 and gameaccount[i].status_code != 'SOLD' and status != 'Banned' and \
+                    gameaccount[i].status_code != 'PROCESSED':
+                # 1 - the rating from which all accounts should be shown
                 heroes_content, artifacts_content, path_img_hero, path_img_artifact = [], [], [], []
                 user = User.query.filter_by(login=gameaccount[i].user_owner).first()
                 heroes = gameaccount[i].hero_game_content.all()
@@ -1013,34 +1014,51 @@ class Hero(db.Model):
                 content.append(hero_without_img)
         return content
 
-    def add_hero(self):
-        """Adding heroes
+    def add_hero_from_json(self):
+        """Adds heroes from json
 
         Behavior:
-            Parses information about all heroes using the get_info method of the HeroParser class and returns a list
-            with information about all heroes. If the hero is not in the table, then he is added to it, otherwise the
-            information about the hero is overwritten.
-
+            Loads information from json. If such a hero does not exist in the table, then add it.
 
         :return boolean:
         """
         with open('static/data/heroes_data/heroes.json', 'r', encoding='utf-8') as fh:
             result = json.load(fh)
-        if result:
-            for i in range(len(result['name'])):
-                hero = self.query.filter_by(name=result['name'][i]).first()
-                if not hero:
-                    hero_add = Hero(name=result['name'][i], star=result['star'][i], rate=result['rate'][i])
-                    db.session.add(hero_add)
-                    db.session.commit()
-                else:
-                    hero.name = result['name'][i]
-                    hero.star = result['star'][i]
-                    hero.rate = result['rate'][i]
-                    db.session.commit()
-            return True
+        for i in range(len(result['name'])):
+            hero = self.query.filter_by(name=result['name'][i]).first()
+            if not hero:
+                hero_add = Hero(name=result['name'][i], star=result['star'][i], rate=result['rate'][i])
+                db.session.add(hero_add)
+                db.session.commit()
+        return True
+
+    def create_hero(self, user_login, name_hero: str, stars_hero: int, rate_hero: float):
+        """Adds a hero
+
+        Behavior:
+                If the user does not have the Admin role, then False. If the hero name already exists, then False.
+                If all the conditions are met, a new hero is added.
+
+        :param user: an object of such a user who wants to add a hero
+        :param name_hero: the name of the hero to add
+        :param stars_hero: the number of stars the hero has
+        :param rate_hero: hero rating
+        :return:
+        """
+        user = User.query.filter_by(login=user_login).first()
+        if user.role.filter_by(role='Admin').first():
+            if not self.query.filter_by(name=name_hero).first():
+                hero = Hero(name=name_hero, star=stars_hero, rate=rate_hero)
+                db.session.add(hero)
+                db.session.commit()
+                return True
+            else:
+                flash("Such an hero already exists!")
+                return False
         else:
+            flash("You are not an administrator!")
             return False
+
 
     def show_all_heroes(self):
         """Returns a list with information about all heroes
@@ -1089,31 +1107,48 @@ class Artifact(db.Model):
                 content.append(artifact_without_img)
         return content
 
-    def add_artifact(self):
-        """Adds an artifact
+    def add_artifact_from_json(self):
+        """Adds artifact from json
 
          Behavior:
-            Parses information about all artifacts using the ArtifactParser get_info class method and returns a list
-            with information about all artifacts. If the artifact is not in the table, then it is added to it, otherwise
-            the information about the artifact is overwritten.
+            Loads information from json. If such a artifact does not exist in the table, then add it.
 
         :return boolean:
         """
         with open('static/data/artifacts_data/artifacts.json', 'r', encoding='utf-8') as fh:
             result = json.load(fh)
-        if result:
-            for i in range(len(result['name'])):
-                artifact = self.query.filter_by(name=result['name'][i]).first()
-                if not artifact:
-                    artifact_add = Artifact(name=result['name'][i], star=result['star'][i])
-                    db.session.add(artifact_add)
-                    db.session.commit()
-                else:
-                    artifact.name = result['name'][i]
-                    artifact.star = result['star'][i]
-                    db.session.commit()
-            return True
+        for i in range(len(result['name'])):
+            artifact = self.query.filter_by(name=result['name'][i]).first()
+            if not artifact:
+                artifact_add = Artifact(name=result['name'][i], star=result['star'][i])
+                db.session.add(artifact_add)
+                db.session.commit()
+        return True
+
+    def create_artifact(self, user_login, name_artifact: str, stars_artifact: int):
+        """Adds an artifact
+
+        Behavior
+                If the user does not have the Admin role, then False. If the artifact name already exists, then False.
+                If all conditions are met, a new artifact is added.
+
+        :param user_login: an object of such a user who wants to add a new artifact
+        :param name_artifact: artifact name
+        :param stars_artifact: the number of stars the artifact has
+        :return:
+        """
+        user = User.query.filter_by(login=user_login).first()
+        if user.role.filter_by(role='Admin'):
+            if not self.query.filter_by(name=name_artifact).first():
+                artifact = Artifact(name=name_artifact, star=stars_artifact)
+                db.session.add(artifact)
+                db.session.commit()
+                return True
+            else:
+                flash("Such an artifact already exists!")
+                return False
         else:
+            flash("You are not an administrator!")
             return False
 
     def show_all_artifacts(self):
