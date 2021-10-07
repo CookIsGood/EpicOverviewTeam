@@ -126,17 +126,22 @@ def create_hero():
             name = form.name_hero.data
             star = form.star_hero.data
             rate = form.rate_hero.data
-
+            element = form.element_hero.data
+            classes = form.classes_hero.data
             token = s.dumps({'name': name,
                              'star': star,
                              'rate': rate,
-                             'user': user.login},
+                             'user': user.login,
+                             'element': element,
+                             'classes': classes},
                             salt='confirm-create-hero')
             msg = Message('Confirm create hero', sender=email, recipients=[user.email])
             link = url_for('create_hero_confirm', token=token, _external=True)
             msg.body = f'New character name: {name}\n' \
                        f'Number of stars: {star}\n' \
-                       f'Rating: {rate} \n' \
+                       f'Rating: {rate} \n'\
+                       f'Element: {element}\n'\
+                       f'Class: {classes}\n'\
                        f'Please double-check the correctness of the entered data! \nIf you notice that the data ' \
                        f'are incorrect, then ignore this letter and repeat the character creation procedure again.\n' \
                        f'Your link is:\n{link}'
@@ -152,7 +157,7 @@ def create_hero_confirm(token):
     try:
         data = s.loads(token, salt='confirm-create-hero', max_age=60 * 5)
         if Hero().create_hero(user_login=data['user'], name_hero=data['name'], stars_hero=data['star'],
-                              rate_hero=data['rate']):
+                              rate_hero=data['rate'], classes=data['classes'], element=data['element']):
             flash("The hero was created successfully!")
             return redirect(url_for('admin_login'))
         else:
@@ -170,14 +175,17 @@ def create_artifact():
         if form.validate_on_submit():
             name = form.name_artifact.data
             star = form.star_artifact.data
+            classes = form.classes_artifact.data
             token = s.dumps({'name': name,
                              'star': star,
-                             'user': user.login},
+                             'user': user.login,
+                             'classes': classes},
                             salt='confirm-create-artifact')
             msg = Message('Confirm create artifact', sender=email, recipients=[user.email])
             link = url_for('create_artifact_confirm', token=token, _external=True)
             msg.body = f'New artifact name: {name}\n' \
                        f'Number of stars: {star}\n' \
+                       f'Class: {classes}\n' \
                        f'Please double-check the correctness of the entered data! \nIf you notice that the data ' \
                        f'are incorrect, then ignore this letter and repeat the artifact creation procedure again.\n' \
                        f'Your link is:\n{link}'
@@ -194,7 +202,8 @@ def create_artifact_confirm(token):
         data = s.loads(token, salt='confirm-create-artifact', max_age=60 * 5)
         if Artifact().create_artifact(user_login=data['user'],
                                       name_artifact=data['name'],
-                                      stars_artifact=data['star']):
+                                      stars_artifact=data['star'],
+                                      classes=data['classes']):
             flash("The artifact was created successfully!")
             return redirect(url_for('admin_login'))
         else:
@@ -383,6 +392,7 @@ def take_off_role(member_login):
         if form.validate_on_submit():
             if user.login != member_login:
                 if RoleAssignment().delete_role_user(login=member_login, role=form.roles.data):
+                    flash(f"Role {form.roles.data} successfully deleted from the user {member_login}")
                     return redirect(url_for('member_profile', member_login=member_login))
                 else:
                     return redirect(url_for('take_off_role', member_login=member_login))
@@ -405,6 +415,7 @@ def take_off_status(member_login):
         if form.validate_on_submit():
             if user.login != member_login:
                 if StatusAssignment().delete_status_user(login_user=member_login, status=form.statuses.data):
+                    flash(f"Status {form.statuses.data} successfully deleted from the user {member_login}")
                     return redirect(url_for('member_profile', member_login=member_login))
                 else:
                     return redirect(url_for('take_off_status', member_login=member_login))

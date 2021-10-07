@@ -164,6 +164,12 @@ class CreateHero(FlaskForm):
     rate_hero = FloatField('Rate: ', validators=[DataRequired(message="You have not filled out the rate field!"),
                                                  NumberRange(min=1.0, max=10.0,
                                                              message="The rating of the hero can be from 1.0 to 10.0!")])
+    element_hero = SelectField('Element: ',
+                                   choices=[('fire', 'Fire'), ('ice', 'Ice'), ('earth', 'Earth'), ('light', 'Light'),
+                                            ('Dark', 'dark')])
+    classes_hero = SelectField('Class: ',
+                                   choices=[('knight', 'Knight'), ('warrior', 'Warrior'), ('thief', 'Thief'),
+                                            ('mage', 'Mage'), ('soul_weaver', 'Soul weaver'), ('ranger', 'Ranger')])
     submit = SubmitField("Create hero")
 
 
@@ -177,4 +183,7 @@ class CreateArtifact(FlaskForm):
                                                        NumberRange(min=4, max=5,
                                                                    message="The number of stars for "
                                                                            "an artifact can be from 4 to 5 stars!")])
+    classes_artifact = SelectField('Class: ',
+                              choices=[('knight', 'Knight'), ('warrior', 'Warrior'), ('thief', 'Thief'),
+                                       ('mage', 'Mage'), ('soul_weaver', 'Soul weaver'), ('ranger', 'Ranger')])
     submit = SubmitField("Create artifact")

@@ -55,13 +55,14 @@ class User(AbstUser, db.Model, UserMixin):
     role = db.relationship("RoleAssignment", backref="user", lazy="dynamic")
     possessions = db.relationship("GameAccount", backref="user", lazy="dynamic")
     status = db.relationship("StatusAssignment", backref="user", lazy="dynamic")
+    post = db.relationship("Post", backref="owned_post", lazy="dynamic")
+    comment = db.relationship("Comment", backref="owned_comment", lazy="dynamic")
 
     def change_discord(self, discord_nickname, email):
         user = self.query.filter_by(email=email).first()
         user.discord_nickname = discord_nickname
         db.session.commit()
         return True
-
 
     def create_superuser(self):
         """This function creates a superuser.
@@ -72,7 +73,8 @@ class User(AbstUser, db.Model, UserMixin):
         :return:
         """
         if not self.query.filter_by(email=admin_email).first():
-            user = User(email=admin_email, login='admin', password=generate_password_hash(admin_password), discord_nickname='key#8211')
+            user = User(email=admin_email, login='admin', password=generate_password_hash(admin_password),
+                        discord_nickname='key#8211')
             db.session.add(user)
             db.session.commit()
             return True
@@ -156,7 +158,8 @@ class User(AbstUser, db.Model, UserMixin):
         """
 
         try:
-            user = User(email=email, login=login, discord_nickname=discord_nickname, password=generate_password_hash(password))
+            user = User(email=email, login=login, discord_nickname=discord_nickname,
+                        password=generate_password_hash(password))
             db.session.add(user)
             db.session.commit()
             db.session.add(RoleAssignment(user_login=login, role=role))
@@ -180,6 +183,44 @@ class User(AbstUser, db.Model, UserMixin):
 
     def __repr__(self):
         return f"{self.email}:{self.login}:{self.password}"
+
+
+class Post(db.Model):
+    __tablename__ = 'post'
+
+    """Класс для хранения постов
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), unique=True, nullable=False)
+    body = db.Column(db.String(1024), unique=False, nullable=False)
+    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
+    user = db.Column(db.String(10), db.ForeignKey('user.login'))
+
+    comment = db.relationship("Comment", cascade="all,delete", backref="comment", lazy="dynamic")
+
+    def create_post(self, title: str, body: str, user_login: str):
+        pass
+
+    def delete_post(self, title: str, user_login: str):
+        pass
+
+    def update_post(self, title: str, body: str, user_login: str):
+        pass
+
+
+class Comment(db.Model):
+    __tablename__ = 'comment'
+
+    """Класс для хранения комментариев
+    """
+    id = db.Column(db.Integer, primary_key=True)
+    body = db.Column(db.String(512), unique=False, nullable=False)
+    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
+    post = db.Column(db.String(100), db.ForeignKey('post.title'))
+    user = db.Column(db.String(10), db.ForeignKey('user.login'))
+
+    def create_comment(self, body: str, post_title: str, user_login: str):
+        pass
 
 
 class StatusAssignment(db.Model):
@@ -248,11 +289,25 @@ class StatusAssignment(db.Model):
             if available_status:
                 db.session.delete(available_status)
                 db.session.commit()
-                flash(f"Status {status} successfully deleted from the user {login_user}")
                 return True
             else:
                 flash(f"User has {login_user} no status {status}!")
                 return False
+
+    def show_status_assigments(self, status: str) -> list:
+        """Данная функция возвращает login пользователей, у которых есть данный статус
+
+        Поведение:
+
+
+        :param status:
+        :return:
+        """
+        assignments = self.query.filter_by(status=status).all()
+        nicknames = []
+        for i in range(len(assignments)):
+            nicknames.append(assignments[i].user_login)
+        return nicknames
 
 
 class RoleAssignment(db.Model):
@@ -341,11 +396,28 @@ class RoleAssignment(db.Model):
             if available_role:
                 db.session.delete(available_role)
                 db.session.commit()
-                flash(f"Role {role} successfully deleted from the user {login}")
                 return True
             else:
                 flash(f"User has {login} no role {role}!")
                 return False
+
+    def show_role_assigments(self, role: str) -> list:
+        """Данная функция возвращает login пользователей, у которых есть данная роль
+
+        Поведение:
+
+
+        :param role:
+        :return:
+        """
+        assignments = self.query.filter_by(role=role).all()
+        nicknames = []
+        for i in range(len(assignments)):
+            nicknames.append(assignments[i].user_login)
+        return nicknames
+
+
+
 
 
 
@@ -429,6 +501,9 @@ class Status(db.Model):
                 return False
         status_for_delete = self.query.filter_by(status=status).first()
         if status_for_delete:
+            nicknames_for_delete = StatusAssignment().show_status_assigments(status=status)
+            for name in nicknames_for_delete:
+                StatusAssignment().delete_status_user(login_user=name, status=status)
             db.session.delete(status_for_delete)
             db.session.commit()
             flash(f'Status {status} successfully deleted!')
@@ -437,7 +512,8 @@ class Status(db.Model):
             flash(f'Status {status} does not exist!')
             return False
 
-
+    def show_status_assigments(self):
+        pass
 
 
 class Role(db.Model):
@@ -519,6 +595,9 @@ class Role(db.Model):
                 flash("Basic roles cannot be removed!")
                 return False
         if self.query.filter_by(role=role).first():
+            nicknames_for_delete = RoleAssignment().show_role_assigments(role=role)
+            for name in nicknames_for_delete:
+                RoleAssignment().delete_role_user(login=name, role=role)
             role_for_delete = self.query.filter_by(role=role).first()
             db.session.delete(role_for_delete)
             db.session.commit()
@@ -562,8 +641,8 @@ class GameAccount(db.Model):
 
     user_owner = db.Column(db.String(10), db.ForeignKey('user.login'))
 
-    hero_game_content = db.relationship("ContentHeroGameAccount", backref="herogamecontent", lazy="dynamic")
-    artifact_game_content = db.relationship("ContentArtifactGameAccount", backref="artifactgamecontent", lazy="dynamic")
+    hero_game_content = db.relationship("ContentHeroGameAccount", cascade="all,delete", backref="herogamecontent", lazy="dynamic")
+    artifact_game_content = db.relationship("ContentArtifactGameAccount", cascade="all,delete", backref="artifactgamecontent", lazy="dynamic")
 
     def create(self, name: str, garaunteed_roll: str, price: int, user_owner: str, status_code: str = "SELLING"):
         """Creates a game account.
@@ -848,7 +927,7 @@ class ContentHeroGameAccount(db.Model):
     hero = db.Column(db.String(30), unique=False, nullable=False)
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
 
-    name = db.Column(db.String(5), db.ForeignKey('gameaccount.name'))
+    name = db.Column(db.String(10), db.ForeignKey('gameaccount.name'))
 
     def add_card(self, name_game_account: str, heroes: list):
         """Adding a hero to GameAccount.
@@ -941,7 +1020,7 @@ class ContentArtifactGameAccount(db.Model):
     artifact = db.Column(db.String(50), unique=False, nullable=False)
     created_at = db.Column(db.DateTime(), default=datetime.utcnow)
 
-    name = db.Column(db.String(5), db.ForeignKey('gameaccount.name'))
+    name = db.Column(db.String(10), db.ForeignKey('gameaccount.name'))
 
     def add_card(self, name_game_account: str, artifacts: list):
         """Adding an artifact to GameAccount.
@@ -989,12 +1068,16 @@ class Hero(db.Model):
     id - column numbering
     name - character name (str)
     star - the number of stars the character has (int)
+    classes - character class (str)
+    element - character element (str)
     rate - average character rating (float)
     """
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(30), unique=True, nullable=False)
     star = db.Column(db.Integer, nullable=False)
+    classes = db.Column(db.String(30), unique=False, nullable=False)
+    element = db.Column(db.String(30), unique=False, nullable=False)
     rate = db.Column(db.Float, nullable=False)
 
     def show_hero_without_img(self):
@@ -1027,18 +1110,21 @@ class Hero(db.Model):
         for i in range(len(result['name'])):
             hero = self.query.filter_by(name=result['name'][i]).first()
             if not hero:
-                hero_add = Hero(name=result['name'][i], star=result['star'][i], rate=result['rate'][i])
+                hero_add = Hero(name=result['name'][i], star=result['star'][i], rate=result['rate'][i],
+                                element=result['element'][i], classes=result['classes'][i])
                 db.session.add(hero_add)
                 db.session.commit()
         return True
 
-    def create_hero(self, user_login, name_hero: str, stars_hero: int, rate_hero: float):
+    def create_hero(self, user_login, name_hero: str, stars_hero: int, rate_hero: float, element: str, classes: str):
         """Adds a hero
 
         Behavior:
                 If the user does not have the Admin role, then False. If the hero name already exists, then False.
                 If all the conditions are met, a new hero is added.
 
+        :param classes: hero class
+        :param element: hero element
         :param user: an object of such a user who wants to add a hero
         :param name_hero: the name of the hero to add
         :param stars_hero: the number of stars the hero has
@@ -1048,7 +1134,7 @@ class Hero(db.Model):
         user = User.query.filter_by(login=user_login).first()
         if user.role.filter_by(role='Admin').first():
             if not self.query.filter_by(name=name_hero).first():
-                hero = Hero(name=name_hero, star=stars_hero, rate=rate_hero)
+                hero = Hero(name=name_hero, star=stars_hero, rate=rate_hero, element=element, classes=classes)
                 db.session.add(hero)
                 db.session.commit()
                 return True
@@ -1058,7 +1144,6 @@ class Hero(db.Model):
         else:
             flash("You are not an administrator!")
             return False
-
 
     def show_all_heroes(self):
         """Returns a list with information about all heroes
@@ -1074,7 +1159,9 @@ class Hero(db.Model):
             result = {
                 "name": heroes[i].name,
                 "star": heroes[i].star,
-                "rate": heroes[i].rate
+                "rate": heroes[i].rate,
+                "element": heroes[i].element,
+                "classes": heroes[i].classes,
             }
             content.append(result)
         return content
@@ -1089,10 +1176,12 @@ class Artifact(db.Model):
     
         id - column numbering
         name - artifact name (all artifact names are loaded using a parser)
+        classes - the class the artifact belongs to
         star - the number of stars the artifact has (4 or 5 stars)
     """
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), unique=True, nullable=False)
+    classes = db.Column(db.String(30), unique=False, nullable=False)
     star = db.Column(db.Integer, nullable=False)
 
     def show_artifacts_without_img(self):
@@ -1120,18 +1209,19 @@ class Artifact(db.Model):
         for i in range(len(result['name'])):
             artifact = self.query.filter_by(name=result['name'][i]).first()
             if not artifact:
-                artifact_add = Artifact(name=result['name'][i], star=result['star'][i])
+                artifact_add = Artifact(name=result['name'][i], star=result['star'][i], classes=result['classes'][i])
                 db.session.add(artifact_add)
                 db.session.commit()
         return True
 
-    def create_artifact(self, user_login, name_artifact: str, stars_artifact: int):
+    def create_artifact(self, user_login, name_artifact: str, stars_artifact: int, classes: str):
         """Adds an artifact
 
         Behavior
                 If the user does not have the Admin role, then False. If the artifact name already exists, then False.
                 If all conditions are met, a new artifact is added.
 
+        :param classes: the class the artifact belongs to
         :param user_login: an object of such a user who wants to add a new artifact
         :param name_artifact: artifact name
         :param stars_artifact: the number of stars the artifact has
@@ -1140,7 +1230,7 @@ class Artifact(db.Model):
         user = User.query.filter_by(login=user_login).first()
         if user.role.filter_by(role='Admin'):
             if not self.query.filter_by(name=name_artifact).first():
-                artifact = Artifact(name=name_artifact, star=stars_artifact)
+                artifact = Artifact(name=name_artifact, star=stars_artifact, classes=classes)
                 db.session.add(artifact)
                 db.session.commit()
                 return True
@@ -1164,7 +1254,8 @@ class Artifact(db.Model):
         for i in range(len(artifacts)):
             result = {
                 "name": artifacts[i].name,
-                "star": artifacts[i].star
+                "star": artifacts[i].star,
+                "classes": artifacts[i].classes,
             }
             content.append(result)
         return content
