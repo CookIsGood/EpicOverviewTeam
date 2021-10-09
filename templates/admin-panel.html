@@ -75,6 +75,78 @@
         </div>
     </div>
 
+<div class="container">
+  <div class="row">
+      <div class="col-sm">
+          <h2>Availible heroes:</h2>
+    <div class="container mb-3 mt-3">
+            <form method="post" action="{{ url_for('change_hero_data') }}">
+
+        <table class="table table-bordered myDataTable" style="width:100%">
+            <thead>
+                <tr>
+                    <th scope="col"></th>
+                   <th scope="col">Hero</th>
+                    <th scope="col">Star</th>
+                    <th scope="col">Rate</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for hero in content["heroes"] %}
+            <tr>
+                <td>
+                    <input type="radio" name="checkbox_hero" value="{{ hero['name'] }}">
+                </td>
+                <td>{{ hero['name'] }}</td>
+                <td>{{ hero['star'] }}</td>
+                <td>{{ hero['rate'] }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+                <button class="btn btn-warning px-10 me-sm-10" type="submit" name="actionCard" value="UpdateCard">Update hero</button>
+                <button class="btn btn-danger px-10 me-sm-10" type="submit" name="actionCard" value="DeleteCard">Delete hero</button>
+                </form>
+
+    </div>
+          </div>
+
+
+<div class="col-sm">
+    <h2>Availible artifacts:</h2>
+        <div class="container mb-3 mt-3">
+            <form method="post" action="{{ url_for('change_artifact_data') }}">
+        <table class="table table-bordered myDataTable" style="width:100%">
+            <thead>
+                <tr>
+                    <th scope="col"></th>
+                   <th scope="col">Artifact</th>
+                    <th scope="col">Star</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for artifact in content["artifacts"] %}
+            <tr>
+                <td>
+                    <input type="radio" name="checkbox_artifact" value="{{ artifact['name'] }}">
+                </td>
+                <td>{{ artifact['name'] }}</td>
+                <td>{{ artifact['star'] }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+
+        </table>
+                <button class="btn btn-warning px-10 me-sm-10" type="submit" name="actionCard" value="UpdateCard">Update artifact</button>
+                <button class="btn btn-danger px-10 me-sm-10" type="submit" name="actionCard" value="DeleteCard">Delete artifact</button>
+               </form>
+    </div>
+    </div>
+
+  </div>
+    </div>
+
 
 <div class="container">
   <div class="row">

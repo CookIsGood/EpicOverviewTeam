@@ -18,6 +18,36 @@ def index():
     return render_template("index.html")
 
 
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    context = {
+        'all_heroes': Hero().show_all_heroes(),
+        'all_artifacts': Artifact().show_all_artifacts()
+    }
+    if request.method == 'POST':
+        heroes = request.form.getlist('heroes')
+        artifacts = request.form.getlist('artifacts')
+        if len(heroes) == 0 and len(artifacts) == 0:
+            flash("You haven't selected any hero or artifact!")
+            return redirect(url_for('search'))
+        return redirect(url_for('epicseven', heroes_names=heroes, artifacts_names=artifacts))
+    return render_template('search.html', **context)
+
+
+
+@app.route('/board/<heroes_names>/<artifacts_names>', methods=['GET', 'POST'])
+def epicseven(heroes_names, artifacts_names):
+    gameaccounts_info = GameAccount().show_gameaccount_all()
+    print(heroes_names)
+    print(artifacts_names)
+    if gameaccounts_info is None:
+        return render_template("epicseven.html", content=None, zip=zip)
+    else:
+        content = {
+            "gameaccounts_info": gameaccounts_info
+        }
+        return render_template("epicseven.html", content=content, zip=zip)
+
 @app.route('/about')
 def about():
     return render_template("about.html")
@@ -27,13 +57,16 @@ def about():
 def faq():
     return render_template("faq.html")
 
+
 @app.route('/privacy-policy')
 def privacy_policy():
     return render_template("privacy-policy.html")
 
+
 @app.route('/copyright-policy')
 def copyright_policy():
     return render_template("copyright-policy.html")
+
 
 @app.route('/signin', methods=['GET', 'POST'])
 def signin():
@@ -105,16 +138,215 @@ def admin_login():
         all_users = User().show_all_users()
         heroes_without_img = Hero().show_hero_without_img()
         artifacts_without_img = Artifact().show_artifacts_without_img()
+        heroes = Hero().show_all_heroes()
+        artifacts = Artifact().show_all_artifacts()
         content = {
             'users': all_users,
             'heroes_without_img': heroes_without_img,
             'artifacts_without_img': artifacts_without_img,
             'roles': available_roles,
-            'statuses': available_statuses
+            'statuses': available_statuses,
+            'heroes': heroes,
+            'artifacts': artifacts,
         }
 
         return render_template("admin-panel.html", content=content)
     return render_template('errors/error404.html'), 404
+
+
+@app.route('/admin-panel/change-hero-data', methods=['GET', 'POST'])
+@login_required
+def change_hero_data():
+    user = User.query.filter_by(id=current_user.get_id()).first()
+    if user.role.filter_by(role='Admin').first():
+        if request.method == 'POST':
+            name = request.form.getlist('checkbox_hero')
+            if len(name) != 0:
+                if request.form['actionCard'] == 'DeleteCard':
+                    token = s.dumps({'name': name[0], },
+                                    salt='confirm-delete-hero')
+                    msg = Message('Confirm delete hero', sender=email, recipients=[user.email])
+                    link = url_for('delete_hero_confirm', token=token, _external=True)
+                    msg.body = f'Name hero for delete: {name[0]}\n' \
+                               f'Please double-check the correctness of the entered data! \nIf you notice that the data ' \
+                               f'are incorrect, then ignore this letter and repeat the character creation procedure again.\n' \
+                               f'Your link is:\n{link}'
+                    mail.send(msg)
+                    flash(f"A confirmation letter for delete a hero was sent to {user.email}")
+                    return redirect(url_for('admin_login'))
+                if request.form['actionCard'] == 'UpdateCard':
+                    return redirect(url_for('update_hero', name_hero=name[0]))
+            else:
+                flash("You haven't picked a hero!")
+                return redirect(url_for('admin_login'))
+    return render_template('errors/error404.html'), 404
+
+@app.route('/admin-panel/confirm-delete-hero/<token>', methods=['GET', 'POST'])
+def delete_hero_confirm(token):
+    try:
+        data = s.loads(token, salt='confirm-delete-hero', max_age=60 * 5)
+        if Hero().delete_hero(hero_name=data['name']):
+            flash('You have successfully deleted your hero!')
+            return redirect(url_for('admin_login'))
+        else:
+            flash('Failed to delete the hero!')
+            return redirect(url_for('admin_login'))
+    except SignatureExpired:
+        flash("Link expired :(")
+        return redirect(url_for('admin_login'))
+
+
+@app.route('/admin-panel/change-artifact-data', methods=['GET', 'POST'])
+@login_required
+def change_artifact_data():
+    user = User.query.filter_by(id=current_user.get_id()).first()
+    if user.role.filter_by(role='Admin').first():
+        if request.method == 'POST':
+            name = request.form.getlist('checkbox_artifact')
+            if len(name) != 0:
+                if request.form['actionCard'] == 'DeleteCard':
+                    token = s.dumps({'name': name[0],},
+                                    salt='confirm-delete-artifact')
+                    msg = Message('Confirm delete artifact', sender=email, recipients=[user.email])
+                    link = url_for('delete_artifact_confirm', token=token, _external=True)
+                    msg.body = f'Name artifact for delete: {name[0]}\n' \
+                               f'Please double-check the correctness of the entered data! \nIf you notice that the data ' \
+                               f'are incorrect, then ignore this letter and repeat the character creation procedure again.\n' \
+                               f'Your link is:\n{link}'
+                    mail.send(msg)
+                    flash(f"A confirmation letter for delete a artifact was sent to {user.email}")
+                    return redirect(url_for('admin_login'))
+                if request.form['actionCard'] == 'UpdateCard':
+                    return redirect(url_for('update_artifact', name_artifact=name[0]))
+            else:
+                flash("You haven't picked a artifact!")
+                return redirect(url_for('admin_login'))
+    return render_template('errors/error404.html'), 404
+
+@app.route('/admin-panel/confirm-delete-artifact/<token>', methods=['GET', 'POST'])
+def delete_artifact_confirm(token):
+    try:
+        data = s.loads(token, salt='confirm-delete-artifact', max_age=60 * 5)
+        if Artifact().delete_artifact(artifact_name=data['name']):
+            flash('You have successfully deleted your artifact!')
+            return redirect(url_for('admin_login'))
+        else:
+            flash('Failed to delete the artifact!')
+            return redirect(url_for('admin_login'))
+    except SignatureExpired:
+        flash("Link expired :(")
+        return redirect(url_for('admin_login'))
+
+
+@app.route('/admin-panel/update-hero/<name_hero>', methods=['GET', 'POST'])
+@login_required
+def update_hero(name_hero):
+    user = User.query.filter_by(id=current_user.get_id()).first()
+    if user.role.filter_by(role='Admin').first():
+        hero = Hero.query.filter_by(name=name_hero).first()
+        data = {
+            'name_hero': hero.name,
+            'star_hero': hero.star,
+            'rate_hero': hero.rate,
+            'element_hero': hero.element,
+            'classes_hero': hero.classes,
+        }
+        form = ChangeHero(data=data)
+        if form.validate_on_submit():
+            name = form.name_hero.data
+            star = form.star_hero.data
+            rate = form.rate_hero.data
+            element = form.element_hero.data
+            classes = form.classes_hero.data
+
+            token = s.dumps({'name': name,
+                             'star': star,
+                             'user': user.login,
+                             'rate': rate,
+                             'element': element,
+                             'classes': classes},
+                            salt='confirm-update-hero')
+            msg = Message('Confirm update hero', sender=email, recipients=[user.email])
+            link = url_for('update_hero_confirm', token=token, _external=True)
+            msg.body = f'New hero name: {name}\n' \
+                       f'Number of stars: {star}\n'\
+                       f'Rate: {rate}\n' \
+                       f'Element: {element}\n'\
+                       f'Class: {classes}\n' \
+                       f'Please double-check the correctness of the entered data! \nIf you notice that the data ' \
+                       f'are incorrect, then ignore this letter and repeat the character creation procedure again.\n' \
+                       f'Your link is:\n{link}'
+            mail.send(msg)
+            flash(f"A confirmation letter for update a artifact was sent to {user.email}")
+            return redirect(url_for('admin_login'))
+
+        return render_template('update-hero.html', form=form)
+    return render_template('errors/error404.html'), 404
+
+
+@app.route('/admin-panel/confirm-update-hero/<token>', methods=['GET', 'POST'])
+def update_hero_confirm(token):
+    try:
+        data = s.loads(token, salt='confirm-update-hero', max_age=60 * 5)
+        if Hero().update_hero(user_login=data['user'], hero_name=data['name'], star=data['star'], rate=data['rate'],
+                              element=data['element'], classes=data['classes']):
+            return redirect(url_for('admin_login'))
+        else:
+            return redirect(url_for('update_hero', name_hero=data['name']))
+    except SignatureExpired:
+        flash("Link expired :(")
+        return redirect(url_for('admin_login'))
+
+
+@app.route('/admin-panel/update-artifact/<name_artifact>', methods=['GET', 'POST'])
+@login_required
+def update_artifact(name_artifact):
+    user = User.query.filter_by(id=current_user.get_id()).first()
+    if user.role.filter_by(role='Admin').first():
+        artifact = Artifact.query.filter_by(name=name_artifact).first()
+        data = {
+            'name_artifact': artifact.name,
+            'star_artifact': artifact.star,
+            'classes_artifact': artifact.classes,
+        }
+        form = ChangeArtifact(data=data)
+        if form.validate_on_submit():
+            name = form.name_artifact.data
+            star = form.star_artifact.data
+            classes = form.classes_artifact.data
+            token = s.dumps({'name': name,
+                             'star': star,
+                             'user': user.login,
+                             'classes': classes},
+                            salt='confirm-update-artifact')
+            msg = Message('Confirm update artifact', sender=email, recipients=[user.email])
+            link = url_for('update_artifact_confirm', token=token, _external=True)
+            msg.body = f'New artifact name: {name}\n' \
+                       f'Number of stars: {star}\n' \
+                       f'Class: {classes}\n' \
+                       f'Please double-check the correctness of the entered data! \nIf you notice that the data ' \
+                       f'are incorrect, then ignore this letter and repeat the character creation procedure again.\n' \
+                       f'Your link is:\n{link}'
+            mail.send(msg)
+            flash(f"A confirmation letter for update a artifact was sent to {user.email}")
+            return redirect(url_for('admin_login'))
+        return render_template('update-artifact.html', form=form)
+    return render_template('errors/error404.html'), 404
+
+
+@app.route('/admin-panel/confirm-update-artifact/<token>', methods=['GET', 'POST'])
+def update_artifact_confirm(token):
+    try:
+        data = s.loads(token, salt='confirm-update-artifact', max_age=60 * 5)
+        if Artifact().update_artifact(user_login=data['user'], artifact_name=data['name'], star=data['star'],
+                                      classes=data['classes']):
+            return redirect(url_for('admin_login'))
+        else:
+            return redirect(url_for('update_artifact', name_artifact=data['name']))
+    except SignatureExpired:
+        flash("Link expired :(")
+        return redirect(url_for('admin_login'))
+
 
 @app.route('/admin-panel/add-new-hero-form', methods=['GET', 'POST'])
 @login_required
@@ -139,9 +371,9 @@ def create_hero():
             link = url_for('create_hero_confirm', token=token, _external=True)
             msg.body = f'New character name: {name}\n' \
                        f'Number of stars: {star}\n' \
-                       f'Rating: {rate} \n'\
-                       f'Element: {element}\n'\
-                       f'Class: {classes}\n'\
+                       f'Rating: {rate} \n' \
+                       f'Element: {element}\n' \
+                       f'Class: {classes}\n' \
                        f'Please double-check the correctness of the entered data! \nIf you notice that the data ' \
                        f'are incorrect, then ignore this letter and repeat the character creation procedure again.\n' \
                        f'Your link is:\n{link}'
@@ -165,6 +397,7 @@ def create_hero_confirm(token):
     except SignatureExpired:
         flash("Link expired :(")
         return redirect(url_for('admin_login'))
+
 
 @app.route('/admin-panel/add-new-artifact-form', methods=['GET', 'POST'])
 @login_required
@@ -233,6 +466,7 @@ def hero_img_upload():
                 return redirect(url_for('profile'))
     return render_template('errors/error404.html'), 404
 
+
 @app.route('/admin-panel/artifact-img-upload', methods=['GET', 'POST'])
 @login_required
 def artifact_img_upload():
@@ -252,6 +486,7 @@ def artifact_img_upload():
                 flash("You have not chosen which artifact to download!")
                 return redirect(url_for('profile'))
     return render_template('errors/error404.html'), 404
+
 
 @app.route('/admin-panel/members/<member_login>', methods=['GET', 'POST'])
 @login_required
@@ -285,6 +520,7 @@ def create_role():
         return render_template('errors/error404.html'), 404
     return render_template('create-role-form.html', form=form)
 
+
 @app.route('/admin-panel/statuses/create-status', methods=['GET', 'POST'])
 @login_required
 def create_status():
@@ -300,6 +536,7 @@ def create_status():
     else:
         return render_template('errors/error404.html'), 404
     return render_template('create-status-form.html', form=form)
+
 
 @app.route('/admin-panel/statuses/delete-status', methods=['GET', 'POST'])
 @login_required
@@ -357,6 +594,7 @@ def add_role(member_login):
         return render_template('errors/error404.html'), 404
     return render_template('change-role-form.html', form=form, member_login=member_login)
 
+
 @app.route('/admin-panel/members/<member_login>/add-status', methods=['GET', 'POST'])
 @login_required
 def add_status(member_login):
@@ -402,6 +640,7 @@ def take_off_role(member_login):
     else:
         return render_template('errors/error404.html'), 404
     return render_template('change-role-form.html', form=form, member_login=member_login)
+
 
 @app.route('/admin-panel/members/<member_login>/take-off-status', methods=['GET', 'POST'])
 @login_required
@@ -478,25 +717,9 @@ def confirm_signup(token):
 
 
 @app.route('/logout/', methods=['GET', 'POST'])
-@login_required
 def logout():
-    if request.method == 'POST':
-        logout_user()
-        return redirect(url_for('index'))
-    return render_template('errors/error404.html'), 404
-
-
-@app.route('/board', methods=['GET', 'POST'])
-@cache.cached(timeout=60*5)
-def epicseven():
-    gameaccounts_info = GameAccount().show_gameaccount_all()
-    if gameaccounts_info is None:
-        return render_template("epicseven.html", content=None, zip=zip)
-    else:
-        content = {
-            "gameaccounts_info": gameaccounts_info
-        }
-        return render_template("epicseven.html", content=content, zip=zip)
+    logout_user()
+    return redirect(url_for('index'))
 
 
 @app.route('/profile', methods=['GET', 'POST'])
@@ -553,7 +776,7 @@ def change_discord(user_login):
     form = ChangeDiscord(data=person)
     if form.validate_on_submit():
         discord = form.discord.data
-        if not User.query.filter_by(discord_nickname=discord).first()\
+        if not User.query.filter_by(discord_nickname=discord).first() \
                 and User().change_discord(email=user.email, discord_nickname=discord):
             flash("You have successfully changed your discord nickname!")
             return redirect(url_for('profile', user_login=user.login))
@@ -699,7 +922,9 @@ def change_game_account_form(user_login, name_account):
         "price": user.possessions.filter_by(name=name_account).first().price,
         "status_code": user.possessions.filter_by(name=name_account).first().status_code
     }
-    gameaccount = {'price': user.possessions.filter_by(name=name_account).first().price}
+    gameaccount = {'price': content['price'],
+                   'status_code': content['status_code'],
+                   'garaunteed_roll': content['garaunteed_roll']}
     form = ChangeSettingsGameAccountForm(data=gameaccount)
     if form.validate_on_submit():
         user_owner = user.login

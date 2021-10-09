@@ -173,6 +173,28 @@ class CreateHero(FlaskForm):
     submit = SubmitField("Create hero")
 
 
+class ChangeHero(FlaskForm):
+    name_hero = StringField('Name: ', validators=[DataRequired(message="You did not fill in the name field!"),
+                                                  Length(min=2, max=30,
+                                                         message="The length of the hero name must be "
+                                                                 "between 2 and 30 characters!"),
+                                                  check_hero_name])
+    star_hero = IntegerField('Star: ', validators=[DataRequired(message="You have not filled out the star field!"),
+                                                   NumberRange(min=4, max=5,
+                                                               message="The number of stars for "
+                                                                       "an hero can be from 4 to 5 stars!")])
+    rate_hero = FloatField('Rate: ', validators=[DataRequired(message="You have not filled out the rate field!"),
+                                                 NumberRange(min=1.0, max=10.0,
+                                                             message="The rating of the hero can be from 1.0 to 10.0!")])
+    element_hero = SelectField('Element: ',
+                                   choices=[('fire', 'Fire'), ('ice', 'Ice'), ('earth', 'Earth'), ('light', 'Light'),
+                                            ('Dark', 'dark')])
+    classes_hero = SelectField('Class: ',
+                                   choices=[('knight', 'Knight'), ('warrior', 'Warrior'), ('thief', 'Thief'),
+                                            ('mage', 'Mage'), ('soul_weaver', 'Soul weaver'), ('ranger', 'Ranger')])
+    submit = SubmitField("Change hero")
+
+
 class CreateArtifact(FlaskForm):
     name_artifact = StringField('Name: ', validators=[DataRequired(message="You did not fill in the name field!"),
                                                       Length(min=2, max=50,
@@ -187,3 +209,18 @@ class CreateArtifact(FlaskForm):
                               choices=[('knight', 'Knight'), ('warrior', 'Warrior'), ('thief', 'Thief'),
                                        ('mage', 'Mage'), ('soul_weaver', 'Soul weaver'), ('ranger', 'Ranger')])
     submit = SubmitField("Create artifact")
+
+class ChangeArtifact(FlaskForm):
+    name_artifact = StringField('Name: ', validators=[DataRequired(message="You did not fill in the name field!"),
+                                                      Length(min=2, max=50,
+                                                             message="The length of the artifact name must be "
+                                                                     "between 2 and 50 characters!"),
+                                                      check_artifact_name])
+    star_artifact = IntegerField('Star: ', validators=[DataRequired(message="You have not filled out the star field!"),
+                                                       NumberRange(min=4, max=5,
+                                                                   message="The number of stars for "
+                                                                           "an artifact can be from 4 to 5 stars!")])
+    classes_artifact = SelectField('Class: ',
+                              choices=[('knight', 'Knight'), ('warrior', 'Warrior'), ('thief', 'Thief'),
+                                       ('mage', 'Mage'), ('soul_weaver', 'Soul weaver'), ('ranger', 'Ranger')])
+    submit = SubmitField("Change artifact")

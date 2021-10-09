@@ -1,0 +1,71 @@
+{% extends 'base_template/base.html' %}
+
+{% block title %}
+<title>Update hero</title>
+{% endblock %}
+
+{% block links %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css"/>
+{% endblock %}
+
+{% block content %}
+
+            <!-- Page content-->
+<section class="py-5">
+    <div class="pt-5">
+        <h1 class="text-center"> Update hero </h1>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-5 mx-auto">
+                        <div class="card card-body">
+                             <form id="submitForm" action="" method="post" data-parsley-validate="" data-parsley-errors-messages-disabled="true" novalidate="" _lpchecked="1">
+                                 {{ form.hidden_tag() }}
+                                 <div class="form-group required">
+                                    <lSabel for="name_hero"> Enter name </lSabel>
+                                     {{ form.name_hero(class="form-control text-lowercase") }}
+                                </div>
+                                 <div class="form-group required">
+                                     <label class="d-flex flex-row align-items-center" for="star_hero"> Enter star</label>
+                                    {{ form.star_hero(class="form-control") }}
+                                </div>
+                                 <div class="form-group required">
+                                     <label class="d-flex flex-row align-items-center" for="rate_hero"> Enter rate</label>
+                                   {{ form.rate_hero(class="form-control") }}
+                                </div>
+                                 <div class="form-group required">
+                                    <lSabel for="name"> Choose element hero </lSabel>
+                                     {{ form.element_hero(class="custom-select") }}
+                                </div>
+                                 <div class="form-group required">
+                                    <lSabel for="name"> Choose class hero </lSabel>
+                                     {{ form.classes_hero(class="custom-select") }}
+                                </div>
+                                <div class="form-group pt-1">
+                                     {{ form.submit(class="btn btn-primary btn-block") }}
+                                </div>
+                            </form>
+
+                            {% for field in form if field.name not in ['csrf_token', 'submit'] %}
+                            {% if field.errors %}
+                            {% for e in field.errors %}
+                            <div class="alert alert-danger py-3" role="alert">
+                                {{ e }}
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                            {% endfor %}
+
+                            {% for msg in get_flashed_messages() %}
+                            {% if msg %}
+                            <div class="alert alert-info py-3" role="alert">
+                                {{ msg }}
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+</section>
+{% endblock %}

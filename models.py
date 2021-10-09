@@ -111,7 +111,7 @@ class User(AbstUser, db.Model, UserMixin):
         }
         return content
 
-    def show_all_users(self):  # show_all_users can be combined with show_user_info
+    def show_all_users(self):
         """This function is designed to display information about all users.
 
         Behavior:
@@ -123,23 +123,7 @@ class User(AbstUser, db.Model, UserMixin):
         users = self.query.all()
         content = []
         for item in users:
-            roles = []
-            all_roles = item.role.all()
-            for i in range(len(all_roles)):
-                roles.append(all_roles[i].role)
-
-            statuses = []
-            all_statuses = item.status.all()
-            for i in range(len(all_statuses)):
-                statuses.append(all_statuses[i].status)
-            user_info = {
-                'email': item.email,
-                'login': item.login,
-                'discord_nickname': item.discord_nickname,
-                'created_at': item.created_at,
-                'roles': roles,
-                'statuses': statuses
-            }
+            user_info = User().show_user_info(login=item.login)
             content.append(user_info)
         return content
 
@@ -417,10 +401,6 @@ class RoleAssignment(db.Model):
         return nicknames
 
 
-
-
-
-
 class Status(db.Model):
     __tablename__ = 'status'
 
@@ -641,8 +621,10 @@ class GameAccount(db.Model):
 
     user_owner = db.Column(db.String(10), db.ForeignKey('user.login'))
 
-    hero_game_content = db.relationship("ContentHeroGameAccount", cascade="all,delete", backref="herogamecontent", lazy="dynamic")
-    artifact_game_content = db.relationship("ContentArtifactGameAccount", cascade="all,delete", backref="artifactgamecontent", lazy="dynamic")
+    hero_game_content = db.relationship("ContentHeroGameAccount", cascade="all,delete", backref="herogamecontent",
+                                        lazy="dynamic")
+    artifact_game_content = db.relationship("ContentArtifactGameAccount", cascade="all,delete",
+                                            backref="artifactgamecontent", lazy="dynamic")
 
     def create(self, name: str, garaunteed_roll: str, price: int, user_owner: str, status_code: str = "SELLING"):
         """Creates a game account.
@@ -1000,6 +982,14 @@ class ContentHeroGameAccount(db.Model):
 
         return True
 
+    def show_hero_assignments(self, hero_name: str) -> list:
+        if self.query.filter_by(hero=hero_name).first():
+            data_gameaccount = self.query.filter_by(hero=hero_name).all()
+            gameaccount_names = []
+            for item in data_gameaccount:
+                gameaccount_names.append(item.name)
+            return gameaccount_names
+
     def __repr__(self):
         return f"{self.id}:{self.hero}:{self.name}"
 
@@ -1055,6 +1045,18 @@ class ContentArtifactGameAccount(db.Model):
             db.session.delete(contentgameaccount)
             db.session.commit()
         return True
+
+    def show_artifact_assignments(self, artifact_name) -> list:
+        """Shows all game accounts that have an artifact
+
+        :param artifact_name: artifact by which accounts will be shown
+        :return:
+        """
+        data_gameaccount = self.query.filter_by(artifact=artifact_name).all()
+        gameaccount_names = []
+        for item in data_gameaccount:
+            gameaccount_names.append(item.name)
+        return gameaccount_names
 
     def __repr__(self):
         return f"{self.id}:{self.artifact}Ж{self.name}"
@@ -1166,6 +1168,52 @@ class Hero(db.Model):
             content.append(result)
         return content
 
+    def delete_hero(self, hero_name: str):
+        """Removes a hero from the general list of heroes
+
+        :param hero_name: the hero name to be removed
+        :return:
+        """
+        gameaccount_names = ContentHeroGameAccount().show_hero_assignments(hero_name=hero_name)
+        if gameaccount_names != None:
+            for item in gameaccount_names:
+                ContentHeroGameAccount().delete_card(name_game_account=item, heroes=[hero_name])
+        hero = self.query.filter_by(name=hero_name).first()
+        if hero:
+            db.session.delete(hero)
+            db.session.commit()
+            return True
+        else:
+            flash("There is no such hero!")
+            return False
+
+    def update_hero(self, hero_name: str, user_login: str, star: int, rate: float, classes: str, element: str):
+        """Updates hero information
+
+        :param element: hero element
+        :param classes: hero class
+        :param rate: hero rating
+        :param star: the number of stars the hero has
+        :param user_login: the login of the user who updates the hero's data
+        :param hero_name: the name of the hero whose information needs to be updated
+        :return:
+        """
+        gameaccount_assigments = ContentHeroGameAccount().show_hero_assignments(hero_name=hero_name)
+        if Hero().delete_hero(hero_name=hero_name):
+            if Hero().create_hero(user_login=user_login, name_hero=hero_name, stars_hero=star, rate_hero=rate,
+                                  element=element, classes=classes):
+                if gameaccount_assigments is not None:
+                    for item in gameaccount_assigments:
+                        ContentHeroGameAccount().add_card(name_game_account=item, heroes=[hero_name])
+                flash("Hero info updated!")
+                return True
+            else:
+                flash("Failed to update hero parameters!")
+                return False
+        else:
+            flash("Failed to delete the hero!")
+            return False
+
     def __repr__(self):
         return f"{self.name}:{self.star}:{self.rate}"
 
@@ -1241,6 +1289,24 @@ class Artifact(db.Model):
             flash("You are not an administrator!")
             return False
 
+    def delete_artifact(self, artifact_name: str):
+        """Удаляет артефакт из общего списка артефактов
+
+        :param artifact_name: артефакт, который необходимо удалить
+        :return:
+        """
+        gameaccount_names = ContentArtifactGameAccount().show_artifact_assignments(artifact_name=artifact_name)
+        for item in gameaccount_names:
+            ContentArtifactGameAccount().delete_card(name_game_account=item, artifacts=[artifact_name])
+        artifact = self.query.filter_by(name=artifact_name).first()
+        if artifact:
+            db.session.delete(artifact)
+            db.session.commit()
+            return True
+        else:
+            flash("There is no such artifact!")
+            return False
+
     def show_all_artifacts(self):
         """Returns information about all artifacts
 
@@ -1259,6 +1325,30 @@ class Artifact(db.Model):
             }
             content.append(result)
         return content
+
+    def update_artifact(self, artifact_name: str, user_login: str, classes: str, star: int):
+        """Обновляет информацию об артефакте
+
+        :param artifact_name:
+        :param user_login:
+        :param classes:
+        :param star:
+        :return:
+        """
+        gameaccount_assigments = ContentArtifactGameAccount().show_artifact_assignments(artifact_name=artifact_name)
+        if Artifact().delete_artifact(artifact_name=artifact_name):
+            if Artifact().create_artifact(user_login=user_login, name_artifact=artifact_name, classes=classes,
+                                          stars_artifact=star):
+                for item in gameaccount_assigments:
+                    ContentArtifactGameAccount().add_card(name_game_account=item, artifacts=[artifact_name])
+                flash("Artifact info updated!")
+                return True
+            else:
+                flash("Failed to update artifact parameters!")
+                return False
+        else:
+            flash("Failed to delete the artifact!")
+            return False
 
     def __repr__(self):
         return f"{self.name}:{self.star}"
