@@ -18,16 +18,6 @@ def get_requested_page_or_home_page(request, session_name: str = 'requested_page
     return url_for(home_page_functions)
 
 
-def parse_card_name(cards):
-    """Converts list class 'str' to class 'list'
-
-    :param cards: list in type str
-    :return:
-    """
-    format_cards = ast.literal_eval(cards)
-    return format_cards
-
-
 def find_matches(all_cards, cards_on_account):
     """This function counts the number of matches between all cards and cards on the game account
 
@@ -61,7 +51,7 @@ def search_gameaccounts(hero_names: list, artifact_names: list, gameaccounts: di
     :param gameaccounts: list of available game accounts
     :return:
     """
-    all_hero, all_artifact = parse_card_name(hero_names), parse_card_name(artifact_names)
+    all_hero, all_artifact = hero_names, artifact_names
     content = []
 
     for gameaccount in gameaccounts:

@@ -24,20 +24,21 @@ def search():
         'all_artifacts': Artifact().show_all_artifacts()
     }
     if request.method == 'POST':
-        heroes = request.form.getlist('heroes')
-        artifacts = request.form.getlist('artifacts')
-        if len(heroes) == 0 and len(artifacts) == 0:
+        session['heroes'] = request.form.getlist('heroes')
+        session['artifacts'] = request.form.getlist('artifacts')
+        if len(session['heroes']) == 0 and len(session['artifacts']) == 0:
             flash("You haven't selected any hero or artifact!")
             return redirect(url_for('search'))
-        return redirect(url_for('epicseven', heroes_names=heroes, artifacts_names=artifacts))
+        return redirect(url_for('epicseven'))
     return render_template('search.html', **context)
 
 
 
-@application.route('/board/<heroes_names>/<artifacts_names>', methods=['GET', 'POST'])
-def epicseven(heroes_names, artifacts_names):
+@application.route('/board', methods=['GET'])
+def epicseven():
     gameaccounts_info = GameAccount().show_gameaccount_all()
-    sorted_gameaccounts_info = search_gameaccounts(heroes_names, artifacts_names, gameaccounts_info)
+    sorted_gameaccounts_info = search_gameaccounts(session.get('heroes', None),
+                                                   session.get('artifacts', None), gameaccounts_info)
     if sorted_gameaccounts_info is None:
         return render_template("epicseven.html", content=None, zip=zip)
     else:
