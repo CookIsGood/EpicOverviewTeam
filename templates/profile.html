@@ -80,14 +80,13 @@
         <table class="table table-bordered myDataTableForProfile" style="width:100%">
             <thead>
                 <tr>
-                    <th scope="col">Select</th>
+                    <th scope="col"></th>
                    <th scope="col">Name</th>
-                    <th scope="col">Heroes</th>
-                    <th scope="col">Artifacts</th>
                     <th scope="col">Garaunt Rolls</th>
                     <th scope="col">Rate</th>
                     <th scope="col">Price ($)</th>
                     <th scope="col">Status</th>
+                    <th scope="col">Last update</th>
                 </tr>
             </thead>
             <tbody>
@@ -96,23 +95,11 @@
             <tr>
                <td> <a class="btn btn-info" href="{{ url_for('profile_account', user_login = user_login, name_account = gameaccount_info['name']) }}">More info</a></td>
                 <td>{{ gameaccount_info['name'] }}</td>
-
-                <td>
-                    {% for path, item in zip(gameaccount_info["path_img_hero"], gameaccount_info["heroes"]) %}
-                    <img src="{{ path }}" width="190" height="70" alt="{{ item }}"/>
-                    <p hidden="true">{{ item }}</p>
-                    {% endfor %}
-                </td>
-                <td>
-                    {% for path, item in zip(gameaccount_info["path_img_artifact"], gameaccount_info["artifacts"]) %}
-                    <img src="{{ path }}" width="170" height="70" alt="{{ item }}"/>
-                    <p hidden="true">{{ item }}</p>
-                    {% endfor %}
-                </td>
                 <td>{{ gameaccount_info["garaunteed_roll"] }}</td>
                 <td>{{ gameaccount_info["rate"] }}</td>
                 <td>{{ gameaccount_info["price"] }}</td>
                 <td>{{ gameaccount_info["status_code"] }}</td>
+                <td>{{ gameaccount_info["last_update"] }}</td>
             </tr>
             {% endfor %}
             {% endif %}
@@ -135,16 +122,6 @@
                 scrollX: true,
                 scrollCollapse: true,
                 lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
-                "columns": [
-                            { "width": "3%" },
-                            { "width": "3%" },
-                            { "width": "38%" },
-                            { "width": "34%" },
-                            { "width": "3%" },
-                            { "width": "3%" },
-                            { "width": "3%" },
-                            { "width": "3%" },
-                          ]
                });
         </script>
 {% endblock %}

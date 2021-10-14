@@ -1,0 +1,66 @@
+{% extends 'base_template/base.html' %}
+
+{% block title %}
+<title>Contact us</title>
+{% endblock %}
+
+{% block content %}
+            <section class="py-5">
+                <div class="container py-5">
+                    <!-- Contact form-->
+                        <div class="text-center mb-5">
+                            <div class="feature bg-primary bg-gradient text-white rounded-3 mb-3"><i class="bi bi-envelope"></i></div>
+                            <h1 class="fw-bolder">Get in touch</h1>
+                            <p class="lead fw-normal text-muted mb-0">We'd love to hear from you</p>
+                        </div>
+                        <div class="row gx-5 justify-content-center">
+                            <div class="col-lg-8 col-xl-6">
+                                <form id="contactForm" action="{{ url_for('contact_us') }}" method="post">
+                                    {{ form.csrf_token }}
+                                    <!-- Name input-->
+                                    <div class="form-floating mb-3">
+                                        {{ form.discord }}
+                                        <label for="discord">Discord name</label>
+                                    </div>
+                                    <!-- Email address input-->
+                                    <div class="form-floating mb-3">
+                                        {{ form.email }}
+                                        <label for="email">Email address</label>
+                                    </div>
+                                    <!-- title input-->
+                                    <div class="form-floating mb-3">
+                                        {{ form.title }}
+                                        <label for="title">Title</label>
+                                    </div>
+                                    <!-- Message input-->
+                                    <div class="form-floating mb-3">
+                                        {{ form.message }}
+                                        <label for="message">Message</label>
+                                    </div>
+                                    <!-- Submit Button-->
+                                    <div class="d-grid">
+                                        {{ form.submit(class = "btn btn-primary btn-lg") }}
+                                    </div>
+                                </form>
+                                {% for field in form if field.name not in ['csrf_token', 'submit'] %}
+                            {% if field.errors %}
+                            {% for e in field.errors %}
+                            <div class="alert alert-danger py-3" role="alert">
+                                {{ e }}
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                            {% endfor %}
+
+                            {% for msg in get_flashed_messages() %}
+                            {% if msg %}
+                            <div class="alert alert-info py-3" role="alert">
+                                {{ msg }}
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                            </div>
+                    </div>
+                </div>
+            </section>
+{% endblock %}

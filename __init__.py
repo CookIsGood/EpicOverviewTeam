@@ -5,6 +5,7 @@ from flask import session
 
 from flask_sqlalchemy import SQLAlchemy
 from flask_caching import Cache
+from sqlalchemy import func
 
 from forms import *
 
@@ -18,6 +19,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 from datetime import datetime
 import os.path
 import json
+import ast
 from config import email, password2, SECRET_KEY, URL_safe, admin_email, admin_password
 
 
@@ -44,12 +46,12 @@ class Config:
 ALLOWED_EXTENSIONS = {'jpg'}
 cache = Cache()
 
-app = Flask(__name__)
-app.config.from_object(Config)
+application = Flask(__name__)
+application.config.from_object(Config)
 
-db = SQLAlchemy(app)
-cache.init_app(app)
-manager = LoginManager(app)
-mail = Mail(app)
+db = SQLAlchemy(application)
+cache.init_app(application)
+manager = LoginManager(application)
+mail = Mail(application)
 s = URLSafeTimedSerializer(URL_safe)
 from routes import *

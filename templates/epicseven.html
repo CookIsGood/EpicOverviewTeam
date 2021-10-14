@@ -23,7 +23,10 @@
                         </header>
                         <!-- Post content-->
                         <section class="mb-2">
-                            <p class="fs-5 mb-4">This page lists all the game accounts that are available. If you are interested in something, then you can always write by the nickname Discord, which is indicated in the corresponding column of the board. If you need to find a special account, then you can always use either sorting or search.</p>
+                            <p class="fs-5 mb-4">
+                               This page is intended for you to select the game account you need and write
+                                to its owner in a discord.
+                            </p>
                             </section>
 </article>
                 </div>
@@ -40,7 +43,6 @@
                     <th scope="col">Artifact</th>
                     <th scope="col">Garaunt Roll</th>
                     <th scope="col">Price ($)</th>
-                    <th scope="col">Status</th>
                 </tr>
             </thead>
             <tbody>
@@ -63,7 +65,6 @@
                 </td>
                 <td>{{ gameaccount_info["garaunteed_roll"] }}</td>
                 <td>{{ gameaccount_info["price"] }}</td>
-                <td>{{ gameaccount_info["status_code"] }}</td>
             </tr>
             {% endfor %}
             {% endif %}
@@ -81,15 +82,14 @@
 <script>
                 var table = $('.myDataTableForAll').DataTable({
                 scrollY: 500,
-                scrollX: 2100,
+                scrollX: false,
                 scrollCollapse: true,
                 lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
                 "columns": [
                             { "width": "3%" },
                             { "width": "3%" },
                             { "width": "38%" },
-                            { "width": "34%" },
-                            { "width": "3%" },
+                            { "width": "38%" },
                             { "width": "3%" },
                             { "width": "3%" },
                           ]

@@ -55,10 +55,14 @@ class User(AbstUser, db.Model, UserMixin):
     role = db.relationship("RoleAssignment", backref="user", lazy="dynamic")
     possessions = db.relationship("GameAccount", backref="user", lazy="dynamic")
     status = db.relationship("StatusAssignment", backref="user", lazy="dynamic")
-    post = db.relationship("Post", backref="owned_post", lazy="dynamic")
-    comment = db.relationship("Comment", backref="owned_comment", lazy="dynamic")
 
     def change_discord(self, discord_nickname, email):
+        """This function changes the user's discord by email
+
+        :param discord_nickname: new nickname discord
+        :param email: email of the user who needs to change nickname
+        :return:
+        """
         user = self.query.filter_by(email=email).first()
         user.discord_nickname = discord_nickname
         db.session.commit()
@@ -169,44 +173,6 @@ class User(AbstUser, db.Model, UserMixin):
         return f"{self.email}:{self.login}:{self.password}"
 
 
-class Post(db.Model):
-    __tablename__ = 'post'
-
-    """Класс для хранения постов
-    """
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(100), unique=True, nullable=False)
-    body = db.Column(db.String(1024), unique=False, nullable=False)
-    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
-    user = db.Column(db.String(10), db.ForeignKey('user.login'))
-
-    comment = db.relationship("Comment", cascade="all,delete", backref="comment", lazy="dynamic")
-
-    def create_post(self, title: str, body: str, user_login: str):
-        pass
-
-    def delete_post(self, title: str, user_login: str):
-        pass
-
-    def update_post(self, title: str, body: str, user_login: str):
-        pass
-
-
-class Comment(db.Model):
-    __tablename__ = 'comment'
-
-    """Класс для хранения комментариев
-    """
-    id = db.Column(db.Integer, primary_key=True)
-    body = db.Column(db.String(512), unique=False, nullable=False)
-    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
-    post = db.Column(db.String(100), db.ForeignKey('post.title'))
-    user = db.Column(db.String(10), db.ForeignKey('user.login'))
-
-    def create_comment(self, body: str, post_title: str, user_login: str):
-        pass
-
-
 class StatusAssignment(db.Model):
     __tablename__ = 'statusassignment'
 
@@ -279,12 +245,9 @@ class StatusAssignment(db.Model):
                 return False
 
     def show_status_assigments(self, status: str) -> list:
-        """Данная функция возвращает login пользователей, у которых есть данный статус
+        """This function returns the login of users who have this status.
 
-        Поведение:
-
-
-        :param status:
+        :param status: the status by which you want to return users
         :return:
         """
         assignments = self.query.filter_by(status=status).all()
@@ -386,12 +349,9 @@ class RoleAssignment(db.Model):
                 return False
 
     def show_role_assigments(self, role: str) -> list:
-        """Данная функция возвращает login пользователей, у которых есть данная роль
+        """This function returns the login of users who have the given role.
 
-        Поведение:
-
-
-        :param role:
+        :param role: the role by which it is necessary to return user logins
         :return:
         """
         assignments = self.query.filter_by(role=role).all()
@@ -491,9 +451,6 @@ class Status(db.Model):
         else:
             flash(f'Status {status} does not exist!')
             return False
-
-    def show_status_assigments(self):
-        pass
 
 
 class Role(db.Model):
@@ -641,116 +598,79 @@ class GameAccount(db.Model):
         :return boolean -> True:
         """
 
-        if self._check_len_name(name):
-            user = User.query.filter_by(email=user_owner).first()
-            gameaccount = self.query.filter_by(user_owner=user.login, name=name).first()
-            if gameaccount:
-                flash(f"Name {name} already exists!")
-            else:
-                create_gameaccount = GameAccount(name=name, garaunteed_roll=garaunteed_roll, price=price,
-                                                 status_code=status_code, user_owner=user.login)
-                db.session.add(create_gameaccount)
-                db.session.commit()
-                return True
+        user = User.query.filter_by(email=user_owner).first()
+        gameaccount = self.query.filter_by(user_owner=user.login, name=name).first()
+        if gameaccount:
+            flash(f"Name {name} already exists!")
         else:
-            raise InvalidNumberCharacters("Invalid number of characters!")
+            create_gameaccount = GameAccount(name=name, garaunteed_roll=garaunteed_roll, price=price,
+                                             status_code=status_code, user_owner=user.login)
+            db.session.add(create_gameaccount)
+            db.session.commit()
+            return True
 
     def show_gameaccount_by_owner(self, user_owner):
         """Returns a list (dict) of all game accounts belonging to user.
 
-        Behavior:
-            The request displays all game accounts owned by user. An empty content list and two empty heroes_content
-            lists, artifacts_content, are created inside the for loop. Name, user_owner, garaunteed_roll, price,
-            status_code, created_at, rate are entered into the empty content list by the gameaccount [i] element. The
-            heroes_content, artifacts_content lists are created inside the loop so that they are rewritten on every i
-            element. Otherwise, there may be a bug with the display of heroes and artifacts on the game account.
-
-            UPD: Added additional loops that generate paths to hero pictures. If no such path exists, then the standard
-            path is used.
-
-        :param user_owner (str): own the game account that needs to be shown
-        :return list(dict):
+        :param user_owner: own the game account that needs to be shown
+        :return list:
         """
 
-        gameaccount = self.query.filter_by(user_owner=user_owner).all()
+        gameaccounts = self.query.filter_by(user_owner=user_owner).all()
         content = []
-        for i in range(len(gameaccount)):
-            heroes_content, artifacts_content, path_img_hero, path_img_artifact = [], [], [], []
-            heroes = gameaccount[i].hero_game_content.all()
-            artifacts = gameaccount[i].artifact_game_content.all()
-            for j in range(len(heroes)):
-                heroes_content.append(heroes[j].hero.replace("_", " "))
-                if os.path.exists(f'static/img/faces/{heroes[j].hero}.jpg'):
-                    path_img_hero.append(f'/static/img/faces/{heroes[j].hero}.jpg')
-                else:
-                    path_img_hero.append(f'/static/img/faces/missing.jpg')
-            for k in range(len(artifacts)):
-                artifacts_content.append(artifacts[k].artifact.replace("_", " "))
-                if os.path.exists(f'static/img/faces/{artifacts[k].artifact}.jpg'):
-                    path_img_artifact.append(f'/static/img/faces/{artifacts[k].artifact}.jpg')
-                else:
-                    path_img_artifact.append(f'/static/img/faces/missing.jpg')
+        for gameaccount in gameaccounts:
+            heroes_content, artifacts_content, path_img_hero, path_img_artifact = self._build_img_path(gameaccount)
             gameaccount_info = {
-                "name": gameaccount[i].name,
-                "user_owner": gameaccount[i].user_owner,
+                "name": gameaccount.name,
+                "user_owner": gameaccount.user_owner,
                 "heroes": heroes_content,
                 "path_img_hero": path_img_hero,
                 "artifacts": artifacts_content,
                 "path_img_artifact": path_img_artifact,
-                "garaunteed_roll": gameaccount[i].garaunteed_roll,
-                "created_at": gameaccount[i].created_at,
-                "rate": gameaccount[i].rate,
-                "price": gameaccount[i].price,
-                "status_code": gameaccount[i].status_code
+                "garaunteed_roll": gameaccount.garaunteed_roll,
+                "created_at": gameaccount.created_at,
+                "rate": gameaccount.rate,
+                "price": gameaccount.price,
+                "status_code": gameaccount.status_code,
+                "last_update": self.get_last_update_gameaccount(gameaccount)
             }
             content.append(gameaccount_info)
         return content
+
+    @staticmethod
+    def get_last_update_gameaccount(gameaccount):
+        """This function returns the time of the last update of the game account
+
+        :param gameaccount: the game account for which you want to return the time of the last update
+        :return:
+        """
+        last_hero_update = ContentHeroGameAccount.query.filter_by(name=gameaccount.name) \
+            .order_by(ContentHeroGameAccount.created_at.desc()) \
+            .first()
+        last_artifact_update = ContentArtifactGameAccount.query.filter_by(name=gameaccount.name) \
+            .order_by(ContentArtifactGameAccount.created_at.desc()).first()
+        if last_hero_update is None and last_artifact_update is None:
+            return None
+        if last_hero_update is None:
+            return last_artifact_update.created_at
+        if last_artifact_update is None:
+            return last_hero_update.created_at
+        return max([last_hero_update.created_at, last_artifact_update.created_at])
 
     def show_gameaccount_by_name(self, user_owner, name):
         """Returns information about the game account of the proper user, and information about the heroes and
         artifacts available on the account.
 
-        Behavior:
-            The request displays the account (user_owner - unique, name - unique) owned by user. Creates three empty
-            lists (content, heroes, artifacts). The gameaccount_info contains field values (except for
-            hero_game_content, artifact_game_content) of the GameAccount table.
-
-            The values of the Hero and Artifact tables are written to the heroes_content, artifacts_content
-            lists with separate for loops (different len () may be), after comparing whether this character is
-            on this account in the ContentHeroGameAccount and ContentArtifactGameAccount table. Further, the resulting
-            filled lists are assigned to the gameaccount_info dictionary. The content sheet, in turn, is filled with the
-            gameaccount_info dictionaries.
-
-        :param user_owner (str): the owner of the game account, which must be shown
-        :param name (str): the name of the game account you want to show
+        :param user_owner: the owner of the game account, which must be shown
+        :param name: the name of the game account you want to show
         :return list(dict):
         """
 
         gameaccount = self.query.filter_by(user_owner=user_owner, name=name).first()
-        content, heroes_content, artifacts_content = [], [], []
-        heroes = gameaccount.hero_game_content.all()
-        artifacts = gameaccount.artifact_game_content.all()
-        parse_heroes = Hero.query.filter_by().all()
-        parse_artifacts = Artifact.query.filter_by().all()
-        for j in range(len(heroes)):
-            for hero in parse_heroes:
-                if hero.name == heroes[j].hero:
-                    full_hero_info = {
-                        "name": hero.name,
-                        "star": hero.star,
-                        "rate": hero.rate,
-                        "added": heroes[j].created_at
-                    }
-                    heroes_content.append(full_hero_info)
-        for k in range(len(artifacts)):
-            for artifact in parse_artifacts:
-                if artifact.name == artifacts[k].artifact:
-                    full_artifact_info = {
-                        "name": artifact.name,
-                        "star": artifact.star,
-                        "added": artifacts[k].created_at
-                    }
-                    artifacts_content.append(full_artifact_info)
+        content = []
+
+        heroes_content = self._get_hero_info(gameaccount=gameaccount)
+        artifacts_content = self._get_artifact_info(gameaccount=gameaccount)
         gameaccount_info = {
             "name": gameaccount.name,
             "user_owner": gameaccount.user_owner,
@@ -765,66 +685,111 @@ class GameAccount(db.Model):
         content.append(gameaccount_info)
         return content
 
+    @staticmethod
+    def _get_hero_info(gameaccount):
+        """This function displays full information about the heroes, including the time it was added to the game
+        account
+
+        :return:
+        """
+        gameaccount_heroes = gameaccount.hero_game_content.all()
+        all_heroes = Hero().show_all_heroes()
+        heroes_content = []
+        for gameaccount_hero in gameaccount_heroes:
+            for hero in all_heroes:
+                if hero['name'] == gameaccount_hero.hero:
+                    hero['added'] = gameaccount_hero.created_at
+                    heroes_content.append(hero)
+        return heroes_content
+
+    @staticmethod
+    def _get_artifact_info(gameaccount):
+        """This function displays full information about the artifacts, including the time it was added to the game
+        account
+
+        :return:
+        """
+        gameaccount_artifacts = gameaccount.artifact_game_content.all()
+        all_artifacts = Artifact().show_all_artifacts()
+        artifacts_content = []
+        for gameaccount_artifact in gameaccount_artifacts:
+            for artifact in all_artifacts:
+                if artifact['name'] == gameaccount_artifact.artifact:
+                    artifact['added'] = gameaccount_artifact.created_at
+                    artifacts_content.append(artifact)
+        return artifacts_content
+
     def show_gameaccount_all(self):
         """Returns information about all game accounts.
-
-        Behavior
-            Displays all game accounts as a request. An empty content list and two empty heroes_content lists,
-            artifacts_content, are created inside the for loop. Name, user_owner, garaunteed_roll, price, status_code
-            are entered into the empty content list by the gameaccount [i] element.
-
-            The heroes_content, artifacts_content lists are created inside the loop so that they are rewritten on
-            every i element. Otherwise, there may be a bug with displaying heroes and artifacts on the game account
-
-            UPD: Added additional loops that generate paths to hero pictures. If no such path exists, then the standard
-            path is used.
 
         :return list(dict):
         """
 
-        gameaccount = self.query.all()
+        gameaccounts = self.query.all()
         content = []
-        for i in range(len(gameaccount)):
-            status = StatusAssignment.query.filter_by(user_login=gameaccount[i].user_owner).first()
-            if not status:
-                status = None
-            else:
-                status = status.status
-            if gameaccount[i].rate >= 1 and gameaccount[i].status_code != 'SOLD' and status != 'Banned' and \
-                    gameaccount[i].status_code != 'PROCESSED':
+        for gameaccount in gameaccounts:
+            if self._check_permissions_gameaccount(gameaccount, rate=1):
                 # 1 - the rating from which all accounts should be shown
-                heroes_content, artifacts_content, path_img_hero, path_img_artifact = [], [], [], []
-                user = User.query.filter_by(login=gameaccount[i].user_owner).first()
-                heroes = gameaccount[i].hero_game_content.all()
-                artifacts = gameaccount[i].artifact_game_content.all()
-                for j in range(len(heroes)):
-                    heroes_content.append(heroes[j].hero.replace("_", " "))
-                    if os.path.exists(f'static/img/faces/{heroes[j].hero}.jpg'):
-                        path_img_hero.append(f'/static/img/faces/{heroes[j].hero}.jpg')
-                    else:
-                        path_img_hero.append(f'/static/img/faces/missing.jpg')
-                for k in range(len(artifacts)):
-                    artifacts_content.append(artifacts[k].artifact.replace("_", " "))
-                    if os.path.exists(f'static/img/faces/{artifacts[k].artifact}.jpg'):
-                        path_img_artifact.append(f'/static/img/faces/{artifacts[k].artifact}.jpg')
-                    else:
-                        path_img_artifact.append(f'/static/img/faces/missing.jpg')
+                user = User.query.filter_by(login=gameaccount.user_owner).first()
+                heroes_content, artifacts_content, path_img_hero, path_img_artifact = \
+                    self._build_img_path(gameaccount)
                 gameaccount_info = {
-                    "name": gameaccount[i].name,
-                    "user_owner": gameaccount[i].user_owner,
+                    "name": gameaccount.name,
+                    "user_owner": gameaccount.user_owner,
                     "discord_nickname": user.discord_nickname,
                     "heroes": heroes_content,
                     "path_img_hero": path_img_hero,
                     "artifacts": artifacts_content,
                     "path_img_artifact": path_img_artifact,
-                    "garaunteed_roll": gameaccount[i].garaunteed_roll,
-                    "created_at": gameaccount[i].created_at,
-                    "rate": gameaccount[i].rate,
-                    "price": gameaccount[i].price,
-                    "status_code": gameaccount[i].status_code
+                    "garaunteed_roll": gameaccount.garaunteed_roll,
+                    "created_at": gameaccount.created_at,
+                    "rate": gameaccount.rate,
+                    "price": gameaccount.price,
+                    "status_code": gameaccount.status_code
                 }
                 content.append(gameaccount_info)
         return content
+
+    @staticmethod
+    def _check_permissions_gameaccount(gameaccount, rate: int):
+        """This function checks if the game account can be visible to other users
+
+        :param gameaccount: game account for which you need to determine the visibility zone
+        :param rate: the rating from which the game account can be shown
+        :return:
+        """
+        status = StatusAssignment.query.filter_by(user_login=gameaccount.user_owner).first()
+        if not status:
+            status = None
+        else:
+            status = status.status
+        if gameaccount.rate >= rate and gameaccount.status_code != 'SOLD' and status != 'Banned' and \
+                gameaccount.status_code != 'PROCESSED':
+            return True
+
+    @staticmethod
+    def _build_img_path(gameaccount):
+        """This function creates a path to the image for each hero and artifact on the game account
+
+        :param gameaccount: a game account for which it is not necessary to create paths to images of heroes and
+        artifacts
+        :return:
+        """
+        content_hero, artifact_content, path_img_hero, path_img_artifact = [], [], [], []
+        cards_hero, cards_artifact = gameaccount.hero_game_content.all(), gameaccount.artifact_game_content.all()
+        for j in range(len(cards_hero)):
+            content_hero.append(cards_hero[j].hero)
+            if os.path.exists(f'static/img/faces/{cards_hero[j].hero}.jpg'):
+                path_img_hero.append(f'/static/img/faces/{cards_hero[j].hero}.jpg')
+            else:
+                path_img_hero.append(f'/static/img/faces/missing.jpg')
+        for k in range(len(cards_artifact)):
+            artifact_content.append(cards_artifact[k].artifact)
+            if os.path.exists(f'static/img/faces/{cards_artifact[k].artifact}.jpg'):
+                path_img_artifact.append(f'/static/img/faces/{cards_artifact[k].artifact}.jpg')
+            else:
+                path_img_artifact.append(f'/static/img/faces/missing.jpg')
+        return content_hero, artifact_content, path_img_hero, path_img_artifact
 
     def delete(self, user_owner, name):
         """Deletes the game account (GameAccount).
@@ -874,21 +839,6 @@ class GameAccount(db.Model):
             return True
         else:
             return False
-
-    @staticmethod
-    def _check_len_name(name: str):
-        """Checking the length of the string.
-
-        Behavior:
-            If the string length is greater than 10 or less than 2, then False, otherwise True.
-
-        :param name (str):
-        :return boolean:
-        """
-
-        if len(name) > 10 or len(name) < 2:
-            return False
-        return True
 
     def __repr__(self):
         return f"{self.id}:{self.name}:{self.user_owner}:{self.garaunteed_roll}:" \
@@ -983,6 +933,11 @@ class ContentHeroGameAccount(db.Model):
         return True
 
     def show_hero_assignments(self, hero_name: str) -> list:
+        """This function shows which game accounts the hero belongs to
+
+        :param hero_name: the hero by which it is necessary to display the names of game accounts
+        :return:
+        """
         if self.query.filter_by(hero=hero_name).first():
             data_gameaccount = self.query.filter_by(hero=hero_name).all()
             gameaccount_names = []
@@ -1059,7 +1014,7 @@ class ContentArtifactGameAccount(db.Model):
         return gameaccount_names
 
     def __repr__(self):
-        return f"{self.id}:{self.artifact}Ж{self.name}"
+        return f"{self.id}:{self.artifact}:{self.name}"
 
 
 class Hero(db.Model):
@@ -1233,6 +1188,10 @@ class Artifact(db.Model):
     star = db.Column(db.Integer, nullable=False)
 
     def show_artifacts_without_img(self):
+        """Displays those artifacts that have no image
+
+        :return:
+        """
         all_artifacts = self.query.all()
         content = []
         for item in all_artifacts:
@@ -1327,12 +1286,12 @@ class Artifact(db.Model):
         return content
 
     def update_artifact(self, artifact_name: str, user_login: str, classes: str, star: int):
-        """Обновляет информацию об артефакте
+        """Updates artifact information
 
-        :param artifact_name:
-        :param user_login:
-        :param classes:
-        :param star:
+        :param artifact_name: artifact name
+        :param user_login: username of the user who is updating the artifact
+        :param classes: artifact class
+        :param star: the number of stars the artifact has
         :return:
         """
         gameaccount_assigments = ContentArtifactGameAccount().show_artifact_assignments(artifact_name=artifact_name)

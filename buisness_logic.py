@@ -2,8 +2,8 @@ import time
 import os
 from flask import session
 from flask import url_for, redirect
-from __init__ import ALLOWED_EXTENSIONS, secure_filename, app, flash
 from PIL import Image
+from __init__ import ALLOWED_EXTENSIONS, secure_filename, application, flash, ast
 
 
 def save_requested_page(request, session_name: str = 'requested_page'):
@@ -16,6 +16,62 @@ def get_requested_page_or_home_page(request, session_name: str = 'requested_page
     if requested_page:
         return redirect(requested_page)
     return url_for(home_page_functions)
+
+
+def parse_card_name(cards):
+    """Converts list class 'str' to class 'list'
+
+    :param cards: list in type str
+    :return:
+    """
+    format_cards = ast.literal_eval(cards)
+    return format_cards
+
+
+def find_matches(all_cards, cards_on_account):
+    """This function counts the number of matches between all cards and cards on the game account
+
+    :param all_cards: all cards in which it is necessary to find a match
+    :param cards_on_account: cards that are on the account
+    :return:
+    """
+    counter = 0
+    for card_in_all_cards in all_cards:
+        for card_on_account in cards_on_account:
+            if card_in_all_cards == card_on_account:
+                counter += 1
+    return counter
+
+
+def sort_gameaccounts(content: list):
+    """This function sorts the list of dictionaries by the value of the matches key.
+
+    :param content: list of dictionaries to be sorted
+    :return:
+    """
+    new_content = sorted(content, key=lambda k: k['matches'], reverse=True)
+    return new_content
+
+
+def search_gameaccounts(hero_names: list, artifact_names: list, gameaccounts: dict):
+    """This function searches and displays game accounts in descending order of matches
+
+    :param hero_names: user selected heroes
+    :param artifact_names: user selected artifacts
+    :param gameaccounts: list of available game accounts
+    :return:
+    """
+    all_hero, all_artifact = parse_card_name(hero_names), parse_card_name(artifact_names)
+    content = []
+
+    for gameaccount in gameaccounts:
+        heroes, artifacts = gameaccount['heroes'], gameaccount['artifacts']
+        if find_matches(all_hero, heroes) + find_matches(all_artifact, artifacts) != 0:
+            gameaccount['matches'] = find_matches(all_hero, heroes) + find_matches(all_artifact, artifacts)
+            content.append(gameaccount)
+
+    content = sort_gameaccounts(content)
+    return content
 
 
 def calculate_game_account_rate(heroes, parse_heroes):
@@ -66,13 +122,13 @@ def check_size_img(filename):
     :return:
     """
 
-    img, original_img = Image.open(os.path.join(app.config['UPLOAD_FOLDER'], filename)), Image.open(
+    img, original_img = Image.open(os.path.join(application.config['UPLOAD_FOLDER'], filename)), Image.open(
         'static/img/faces/achates.jpg')
     width, height = img.size
     original_width, original_height = original_img.size
     if width != original_width or height != original_height:
         img.close(), original_img.close()
-        os.remove(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        os.remove(os.path.join(application.config['UPLOAD_FOLDER'], filename))
         return False
     else:
         img.close(), original_img.close()
@@ -89,7 +145,7 @@ def upload_img(file, entered_name):
     if file and allowed_file(file.filename):
         file.filename = entered_name + '.jpg'
         filename = secure_filename(file.filename)
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
         if check_size_img(filename):
             return True
         else:

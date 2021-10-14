@@ -33,7 +33,6 @@ This project contains standard features that you expect when buying or putting u
 ### [](https://github.com/CookIsGood/epicoverviewteam#todo)To-Do
 - Improve the image loading system (for the admin)
 - Add rating system and user reviews
-- Improve the search for required hero/artifacts in game accounts.
 
 
 ## [](https://github.com/CookIsGood/epicoverviewteam#howtorun)How to Run

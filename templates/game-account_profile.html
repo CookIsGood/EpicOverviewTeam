@@ -56,6 +56,9 @@
   <div class="row">
       <div class="col-sm">
           <h2>Availible heroes:</h2>
+          <p class="fs-5 mb-4">If you have not found the desired hero, then
+              <a href="{{ url_for('contact_us') }}">contact</a>
+              us.</p>
     <div class="container mb-3 mt-3">
             <form method="post" action="{{ url_for('add_card_hero', user_login=user_login, name_account=name_account) }}">
 
@@ -90,6 +93,9 @@
 
 <div class="col-sm">
     <h2>Availible artifacts:</h2>
+    <p class="fs-5 mb-4">If you have not found the desired artifact, then
+              <a href="{{ url_for('contact_us') }}">contact</a>
+              us.</p>
         <div class="container mb-3 mt-3">
             <form method="post" action="{{ url_for('add_card_artifact', user_login=user_login, name_account=name_account) }}">
         <table class="table table-bordered myDataTable" style="width:100%">

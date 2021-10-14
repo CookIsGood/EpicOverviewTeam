@@ -3,7 +3,6 @@ from flask_login import login_user, login_required, logout_user, current_user
 from __init__ import *
 from models import *
 from errors import *
-from buisness_logic import *
 
 Role().add_standart_role()
 User().create_superuser()
@@ -13,12 +12,12 @@ Hero().add_hero_from_json()
 Artifact().add_artifact_from_json()
 
 
-@app.route('/')
+@application.route('/')
 def index():
     return render_template("index.html")
 
 
-@app.route('/search', methods=['GET', 'POST'])
+@application.route('/search', methods=['GET', 'POST'])
 def search():
     context = {
         'all_heroes': Hero().show_all_heroes(),
@@ -35,40 +34,39 @@ def search():
 
 
 
-@app.route('/board/<heroes_names>/<artifacts_names>', methods=['GET', 'POST'])
+@application.route('/board/<heroes_names>/<artifacts_names>', methods=['GET', 'POST'])
 def epicseven(heroes_names, artifacts_names):
     gameaccounts_info = GameAccount().show_gameaccount_all()
-    print(heroes_names)
-    print(artifacts_names)
-    if gameaccounts_info is None:
+    sorted_gameaccounts_info = search_gameaccounts(heroes_names, artifacts_names, gameaccounts_info)
+    if sorted_gameaccounts_info is None:
         return render_template("epicseven.html", content=None, zip=zip)
     else:
         content = {
-            "gameaccounts_info": gameaccounts_info
+            "gameaccounts_info": sorted_gameaccounts_info
         }
         return render_template("epicseven.html", content=content, zip=zip)
 
-@app.route('/about')
+@application.route('/about')
 def about():
     return render_template("about.html")
 
 
-@app.route('/faq')
+@application.route('/faq')
 def faq():
     return render_template("faq.html")
 
 
-@app.route('/privacy-policy')
+@application.route('/privacy-policy')
 def privacy_policy():
     return render_template("privacy-policy.html")
 
 
-@app.route('/copyright-policy')
+@application.route('/copyright-policy')
 def copyright_policy():
     return render_template("copyright-policy.html")
 
 
-@app.route('/signin', methods=['GET', 'POST'])
+@application.route('/signin', methods=['GET', 'POST'])
 def signin():
     form = LoginForm()
     if form.validate_on_submit():
@@ -86,7 +84,33 @@ def signin():
     return render_template('login_user.html', form=form)
 
 
-@app.route('/forgot-password', methods=['GET', 'POST'])
+@application.route('/contact-us', methods=['GET', 'POST'])
+@login_required
+def contact_us():
+    form = ContactForm()
+    if form.validate_on_submit():
+        discord = form.discord.data
+        user_email = form.email.data
+        title = form.title.data
+        message = form.message.data
+        user = User.query.filter_by(email=user_email, id=current_user.get_id()).first()
+        if user:
+            msg_for_recipients = Message('Problems found!', sender=email, recipients=[admin_email])
+            msg_for_recipients.body = f'Request for improvement content fix!\n' \
+                                      f'Discord: {discord}\n' \
+                                      f'Email: {user_email}\n' \
+                                      f'Title: {title}\n' \
+                                      f'Message: {message}\n'
+            mail.send(msg_for_recipients)
+            flash("Your message has been successfully delivered!")
+            return redirect(url_for('profile', user_login=user.login))
+        else:
+            flash("There is no user with this email!")
+            return redirect(url_for('contact_us', form=form))
+
+    return render_template('contact-form.html', form=form)
+
+@application.route('/forgot-password', methods=['GET', 'POST'])
 def forgot_password():
     form = ForgotPasswordForm()
     if form.validate_on_submit():
@@ -114,7 +138,7 @@ def forgot_password():
     return render_template('forgot-password.html', form=form)
 
 
-@app.route('/forgot-password/confirm/<token>', methods=['GET', 'POST'])
+@application.route('/forgot-password/confirm/<token>', methods=['GET', 'POST'])
 def forgot_password_confirm(token):
     try:
         data = s.loads(token, salt='confirm-change-password', max_age=60 * 5)
@@ -128,7 +152,7 @@ def forgot_password_confirm(token):
     return redirect(url_for('signin'))
 
 
-@app.route('/admin-panel', methods=['GET', 'POST'])
+@application.route('/admin-panel', methods=['GET', 'POST'])
 @login_required
 def admin_login():
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -154,7 +178,7 @@ def admin_login():
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/admin-panel/change-hero-data', methods=['GET', 'POST'])
+@application.route('/admin-panel/change-hero-data', methods=['GET', 'POST'])
 @login_required
 def change_hero_data():
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -181,7 +205,7 @@ def change_hero_data():
                 return redirect(url_for('admin_login'))
     return render_template('errors/error404.html'), 404
 
-@app.route('/admin-panel/confirm-delete-hero/<token>', methods=['GET', 'POST'])
+@application.route('/admin-panel/confirm-delete-hero/<token>', methods=['GET', 'POST'])
 def delete_hero_confirm(token):
     try:
         data = s.loads(token, salt='confirm-delete-hero', max_age=60 * 5)
@@ -196,7 +220,7 @@ def delete_hero_confirm(token):
         return redirect(url_for('admin_login'))
 
 
-@app.route('/admin-panel/change-artifact-data', methods=['GET', 'POST'])
+@application.route('/admin-panel/change-artifact-data', methods=['GET', 'POST'])
 @login_required
 def change_artifact_data():
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -223,7 +247,7 @@ def change_artifact_data():
                 return redirect(url_for('admin_login'))
     return render_template('errors/error404.html'), 404
 
-@app.route('/admin-panel/confirm-delete-artifact/<token>', methods=['GET', 'POST'])
+@application.route('/admin-panel/confirm-delete-artifact/<token>', methods=['GET', 'POST'])
 def delete_artifact_confirm(token):
     try:
         data = s.loads(token, salt='confirm-delete-artifact', max_age=60 * 5)
@@ -238,7 +262,7 @@ def delete_artifact_confirm(token):
         return redirect(url_for('admin_login'))
 
 
-@app.route('/admin-panel/update-hero/<name_hero>', methods=['GET', 'POST'])
+@application.route('/admin-panel/update-hero/<name_hero>', methods=['GET', 'POST'])
 @login_required
 def update_hero(name_hero):
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -284,7 +308,7 @@ def update_hero(name_hero):
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/admin-panel/confirm-update-hero/<token>', methods=['GET', 'POST'])
+@application.route('/admin-panel/confirm-update-hero/<token>', methods=['GET', 'POST'])
 def update_hero_confirm(token):
     try:
         data = s.loads(token, salt='confirm-update-hero', max_age=60 * 5)
@@ -298,7 +322,7 @@ def update_hero_confirm(token):
         return redirect(url_for('admin_login'))
 
 
-@app.route('/admin-panel/update-artifact/<name_artifact>', methods=['GET', 'POST'])
+@application.route('/admin-panel/update-artifact/<name_artifact>', methods=['GET', 'POST'])
 @login_required
 def update_artifact(name_artifact):
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -334,7 +358,7 @@ def update_artifact(name_artifact):
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/admin-panel/confirm-update-artifact/<token>', methods=['GET', 'POST'])
+@application.route('/admin-panel/confirm-update-artifact/<token>', methods=['GET', 'POST'])
 def update_artifact_confirm(token):
     try:
         data = s.loads(token, salt='confirm-update-artifact', max_age=60 * 5)
@@ -348,7 +372,7 @@ def update_artifact_confirm(token):
         return redirect(url_for('admin_login'))
 
 
-@app.route('/admin-panel/add-new-hero-form', methods=['GET', 'POST'])
+@application.route('/admin-panel/add-new-hero-form', methods=['GET', 'POST'])
 @login_required
 def create_hero():
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -384,7 +408,7 @@ def create_hero():
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/admin-panel/confirm-create-hero/<token>', methods=['GET', 'POST'])
+@application.route('/admin-panel/confirm-create-hero/<token>', methods=['GET', 'POST'])
 def create_hero_confirm(token):
     try:
         data = s.loads(token, salt='confirm-create-hero', max_age=60 * 5)
@@ -399,7 +423,7 @@ def create_hero_confirm(token):
         return redirect(url_for('admin_login'))
 
 
-@app.route('/admin-panel/add-new-artifact-form', methods=['GET', 'POST'])
+@application.route('/admin-panel/add-new-artifact-form', methods=['GET', 'POST'])
 @login_required
 def create_artifact():
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -429,7 +453,7 @@ def create_artifact():
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/admin-panel/confirm-create-artifact/<token>', methods=['GET', 'POST'])
+@application.route('/admin-panel/confirm-create-artifact/<token>', methods=['GET', 'POST'])
 def create_artifact_confirm(token):
     try:
         data = s.loads(token, salt='confirm-create-artifact', max_age=60 * 5)
@@ -446,7 +470,7 @@ def create_artifact_confirm(token):
         return redirect(url_for('admin_login'))
 
 
-@app.route('/admin-panel/hero-img-upload', methods=['GET', 'POST'])
+@application.route('/admin-panel/hero-img-upload', methods=['GET', 'POST'])
 @login_required
 def hero_img_upload():
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -467,7 +491,7 @@ def hero_img_upload():
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/admin-panel/artifact-img-upload', methods=['GET', 'POST'])
+@application.route('/admin-panel/artifact-img-upload', methods=['GET', 'POST'])
 @login_required
 def artifact_img_upload():
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -488,7 +512,7 @@ def artifact_img_upload():
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/admin-panel/members/<member_login>', methods=['GET', 'POST'])
+@application.route('/admin-panel/members/<member_login>', methods=['GET', 'POST'])
 @login_required
 def member_profile(member_login):
     user = User.query.filter_by(id=current_user.id).first()
@@ -504,7 +528,7 @@ def member_profile(member_login):
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/admin-panel/roles/create-role', methods=['GET', 'POST'])
+@application.route('/admin-panel/roles/create-role', methods=['GET', 'POST'])
 @login_required
 def create_role():
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -521,7 +545,7 @@ def create_role():
     return render_template('create-role-form.html', form=form)
 
 
-@app.route('/admin-panel/statuses/create-status', methods=['GET', 'POST'])
+@application.route('/admin-panel/statuses/create-status', methods=['GET', 'POST'])
 @login_required
 def create_status():
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -538,7 +562,7 @@ def create_status():
     return render_template('create-status-form.html', form=form)
 
 
-@app.route('/admin-panel/statuses/delete-status', methods=['GET', 'POST'])
+@application.route('/admin-panel/statuses/delete-status', methods=['GET', 'POST'])
 @login_required
 def delete_status():
     if request.method == 'POST':
@@ -554,7 +578,7 @@ def delete_status():
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/admin-panel/roles/delete-role', methods=['GET', 'POST'])
+@application.route('/admin-panel/roles/delete-role', methods=['GET', 'POST'])
 @login_required
 def delete_role():
     if request.method == 'POST':
@@ -572,7 +596,7 @@ def delete_role():
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/admin-panel/members/<member_login>/add-role', methods=['GET', 'POST'])
+@application.route('/admin-panel/members/<member_login>/add-role', methods=['GET', 'POST'])
 @login_required
 def add_role(member_login):
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -595,7 +619,7 @@ def add_role(member_login):
     return render_template('change-role-form.html', form=form, member_login=member_login)
 
 
-@app.route('/admin-panel/members/<member_login>/add-status', methods=['GET', 'POST'])
+@application.route('/admin-panel/members/<member_login>/add-status', methods=['GET', 'POST'])
 @login_required
 def add_status(member_login):
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -618,7 +642,7 @@ def add_status(member_login):
     return render_template('change-status-form.html', form=form, member_login=member_login)
 
 
-@app.route('/admin-panel/members/<member_login>/take-off-role', methods=['GET', 'POST'])
+@application.route('/admin-panel/members/<member_login>/take-off-role', methods=['GET', 'POST'])
 @login_required
 def take_off_role(member_login):
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -642,7 +666,7 @@ def take_off_role(member_login):
     return render_template('change-role-form.html', form=form, member_login=member_login)
 
 
-@app.route('/admin-panel/members/<member_login>/take-off-status', methods=['GET', 'POST'])
+@application.route('/admin-panel/members/<member_login>/take-off-status', methods=['GET', 'POST'])
 @login_required
 def take_off_status(member_login):
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -666,7 +690,7 @@ def take_off_status(member_login):
     return render_template('change-status-form.html', form=form, member_login=member_login)
 
 
-@app.route('/signup', methods=['GET', 'POST'])
+@application.route('/signup', methods=['GET', 'POST'])
 def signup():
     form = RegisterForm()
     if form.validate_on_submit():
@@ -695,7 +719,7 @@ def signup():
     return render_template('register_user.html', form=form)
 
 
-@app.route('/signup/confirm/<token>', methods=['GET', 'POST'])
+@application.route('/signup/confirm/<token>', methods=['GET', 'POST'])
 def confirm_signup(token):
     try:
         data = s.loads(token, salt='confirm-signup', max_age=60 * 5)
@@ -716,20 +740,20 @@ def confirm_signup(token):
     return redirect(url_for('signin'))
 
 
-@app.route('/logout/', methods=['GET', 'POST'])
+@application.route('/logout/', methods=['GET', 'POST'])
 def logout():
     logout_user()
     return redirect(url_for('index'))
 
 
-@app.route('/profile', methods=['GET', 'POST'])
+@application.route('/profile', methods=['GET', 'POST'])
 @login_required
 def profile():
     user = User.query.filter_by(id=current_user.get_id()).first()
     return redirect(url_for('profile_login', user_login=user.login))
 
 
-@app.route('/profile/<user_login>', methods=['GET', 'POST'])
+@application.route('/profile/<user_login>', methods=['GET', 'POST'])
 @login_required
 def profile_login(user_login):
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -745,7 +769,7 @@ def profile_login(user_login):
         return redirect(url_for('index'))
 
 
-@app.route('/profile/<user_login>/create-game-account-form', methods=['GET', 'POST'])
+@application.route('/profile/<user_login>/create-game-account-form', methods=['GET', 'POST'])
 @login_required
 def create_game_account_form(user_login):
     form = CreateGameAccountForm()
@@ -768,7 +792,7 @@ def create_game_account_form(user_login):
     return render_template("create-game-account.html", user_login=user.login, form=form)
 
 
-@app.route('/profile/<user_login>/change-discord', methods=['GET', 'POST'])
+@application.route('/profile/<user_login>/change-discord', methods=['GET', 'POST'])
 @login_required
 def change_discord(user_login):
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -786,7 +810,7 @@ def change_discord(user_login):
     return render_template("change-discord.html", user_login=user.login, form=form)
 
 
-@app.route('/profile/<user_login>/<name_account>', methods=['GET', 'POST'])
+@application.route('/profile/<user_login>/<name_account>', methods=['GET', 'POST'])
 @login_required
 def profile_account(user_login, name_account):
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -805,7 +829,7 @@ def profile_account(user_login, name_account):
     return redirect(url_for('profile', user_login=user.login))
 
 
-@app.route('/profile/<user_login>/<name_account>/add-card-hero/', methods=['GET', 'POST'])
+@application.route('/profile/<user_login>/<name_account>/add-card-hero/', methods=['GET', 'POST'])
 @login_required
 def add_card_hero(user_login, name_account):
     if request.method == 'POST':
@@ -824,7 +848,7 @@ def add_card_hero(user_login, name_account):
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/profile/<user_login>/<name_account>/add-card-artifact/', methods=['GET', 'POST'])
+@application.route('/profile/<user_login>/<name_account>/add-card-artifact/', methods=['GET', 'POST'])
 @login_required
 def add_card_artifact(user_login, name_account):
     if request.method == 'POST':
@@ -843,7 +867,7 @@ def add_card_artifact(user_login, name_account):
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/profile/<user_login>/<name_account>/delete-card-hero/', methods=['GET', 'POST'])
+@application.route('/profile/<user_login>/<name_account>/delete-card-hero/', methods=['GET', 'POST'])
 @login_required
 def delete_card_hero(user_login, name_account):
     if request.method == 'POST':
@@ -858,7 +882,7 @@ def delete_card_hero(user_login, name_account):
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/profile/<user_login>/<name_account>/delete-card-artifact/', methods=['GET', 'POST'])
+@application.route('/profile/<user_login>/<name_account>/delete-card-artifact/', methods=['GET', 'POST'])
 @login_required
 def delete_card_artifact(user_login, name_account):
     if request.method == 'POST':
@@ -873,7 +897,7 @@ def delete_card_artifact(user_login, name_account):
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/profile/<user_login>/<name_account>/delete-game-account', methods=['GET', 'POST'])
+@application.route('/profile/<user_login>/<name_account>/delete-game-account', methods=['GET', 'POST'])
 @login_required
 def deleteGameAccount(user_login, name_account):
     if request.method == 'POST':
@@ -896,7 +920,7 @@ def deleteGameAccount(user_login, name_account):
     return render_template('errors/error404.html'), 404
 
 
-@app.route('/delete-account/confirm/<token>', methods=['GET', 'POST'])
+@application.route('/delete-account/confirm/<token>', methods=['GET', 'POST'])
 def deleteGameAccount_confirm(token):
     try:
         data = s.loads(token, salt='confirm-delete', max_age=60 * 5)
@@ -912,7 +936,7 @@ def deleteGameAccount_confirm(token):
         return render_template("game-account_profile.html")
 
 
-@app.route('/profile/<user_login>/<name_account>/change-game-account-form', methods=['GET', 'POST'])
+@application.route('/profile/<user_login>/<name_account>/change-game-account-form', methods=['GET', 'POST'])
 @login_required
 def change_game_account_form(user_login, name_account):
     user = User.query.filter_by(id=current_user.get_id()).first()
@@ -944,7 +968,7 @@ def change_game_account_form(user_login, name_account):
     return render_template('change-game-account.html', content=content, form=form)
 
 
-@app.after_request
+@application.after_request
 def redirect_to_sign(response):
     if response.status_code == 401:
         save_requested_page(request)

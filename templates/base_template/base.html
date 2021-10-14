@@ -43,6 +43,7 @@
                                     <li><a class="dropdown-item" href="{{ url_for('copyright_policy') }}">Copyright Policy</a></li>
                                 </ul>
                             </li>
+                            <li class="nav-item"><a class="nav-link" href="{{ url_for('contact_us') }}">Contact</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ url_for('faq') }}">FAQ</a></li>
                             <li class="nav-item"><a class="nav-link" href="{{ url_for('profile') }}">Profile</a></li>
                             {% if current_user.is_authenticated %}
@@ -70,6 +71,10 @@
                     <div class="col-auto"><div class="small m-0 text-white">Copyright &copy; EOT 2021</div></div>
                     <div class="col-auto">
                         <a class="link-light small" href="{{ url_for('index') }}">Home</a>
+                        <span class="text-white mx-1">&middot;</span>
+                        <a class="link-light small" href="{{ url_for('search') }}">Search</a>
+                        <span class="text-white mx-1">&middot;</span>
+                        <a class="link-light small" href="{{ url_for('contact_us') }}">Contact</a>
                         <span class="text-white mx-1">&middot;</span>
                         <a class="link-light small" href="{{ url_for('faq') }}">FAQ</a>
                         <span class="text-white mx-1">&middot;</span>
