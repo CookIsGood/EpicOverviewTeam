@@ -37,8 +37,8 @@ def search():
 @application.route('/board', methods=['GET'])
 def epicseven():
     gameaccounts_info = GameAccount().show_gameaccount_all()
-    sorted_gameaccounts_info = search_gameaccounts(session.get('heroes', None),
-                                                   session.get('artifacts', None), gameaccounts_info)
+    sorted_gameaccounts_info = search_gameaccounts(session.get('heroes', []),
+                                                   session.get('artifacts', []), gameaccounts_info)
     if sorted_gameaccounts_info is None:
         return render_template("epicseven.html", content=None, zip=zip)
     else:
