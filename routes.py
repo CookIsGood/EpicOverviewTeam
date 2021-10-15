@@ -700,8 +700,7 @@ def signup():
         discord_nickname = form.discord_nickname.data
         password = form.password.data
 
-        if not User.query.filter_by(email=email).first() and not User.query.filter_by(login=login).first() and \
-                not User.query.filter_by(discord_nickname=discord_nickname).first():
+        if not User.query.filter_by(email=email).first() and not User.query.filter_by(login=login).first():
             token = s.dumps({'email': email,
                              'discord_nickname': discord_nickname,
                              'login': login,
