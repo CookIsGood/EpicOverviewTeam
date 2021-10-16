@@ -2,7 +2,7 @@ from flask_login import login_user
 from sqlalchemy.orm import backref
 from werkzeug.security import check_password_hash
 from buisness_logic import *
-from __init__ import *
+from start import *
 from exceptions import *
 from abc import ABCMeta, abstractmethod
 

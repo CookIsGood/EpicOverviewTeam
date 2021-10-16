@@ -1,6 +1,6 @@
 from flask import render_template
 from flask_login import login_user, login_required, logout_user, current_user
-from __init__ import *
+from start import *
 from models import *
 from errors import *
 

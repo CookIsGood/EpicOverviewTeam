@@ -1,4 +1,4 @@
-from __init__ import *
+from start import *
 
 
 @application.errorhandler(404)

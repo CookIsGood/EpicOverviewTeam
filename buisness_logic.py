@@ -3,7 +3,7 @@ import os
 from flask import session
 from flask import url_for, redirect
 from PIL import Image
-from __init__ import ALLOWED_EXTENSIONS, secure_filename, application, flash, ast
+from start import ALLOWED_EXTENSIONS, secure_filename, application, flash, ast
 
 
 def save_requested_page(request, session_name: str = 'requested_page'):
