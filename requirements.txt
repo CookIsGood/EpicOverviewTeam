@@ -2,6 +2,7 @@ abcplus==0.1.0
 alembic==1.6.5
 appdirs==1.4.4
 astroid
+Babel==2.9.1
 bcrypt==3.2.0
 blinker==1.4
 brotlipy==0.7.0
@@ -40,6 +41,7 @@ MarkupSafe
 mccabe==0.6.1
 mypy
 mypy-extensions==0.4.3
+mysqlclient==2.0.3
 parse==1.19.0
 passlib==1.7.4
 Pillow==8.3.2
@@ -63,6 +65,7 @@ SQLAlchemy
 toml
 tqdm==4.62.3
 typing-extensions
+w3lib==1.22.0
 websockets==9.1
 Werkzeug
 win-inet-pton

@@ -26,7 +26,7 @@ import os
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY')
-    SQLALCHEMY_DATABASE_URI = 'postgresql://admin:123@localhost/testflask'
+    SQLALCHEMY_DATABASE_URI = os.getenv('DB_URL')
     DEBUG_TB_ENABLED = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 

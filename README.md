@@ -48,7 +48,7 @@ This project contains standard features that you expect when buying or putting u
     - `ADMIN_EMAIL` - Email address of the user who will be given superuser rights (can be the same as `EMAIL`)
     - `ADMIN_PASSWORD` - Account password on the site
     
--   Step 5: Go to this app's directory and run `python start.py`
+-   Step 4: Go to this app's directory and run `python start.py`
 
 ## [](https://github.com/CookIsGood/epicoverviewteam#development)Development
 Want to contribute? Great!

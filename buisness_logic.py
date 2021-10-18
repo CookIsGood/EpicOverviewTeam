@@ -29,16 +29,21 @@ def _find_match_account(all_hero_cards, all_artifact_cards, hero_on_account, art
     """
     counter = 0
     count_cards = len(all_hero_cards) + len(all_artifact_cards)
-    for card_in_all_hero_cards in all_hero_cards:
-        for card_hero_on_account in hero_on_account:
-            if card_in_all_hero_cards == card_hero_on_account and counter != count_cards:
-                counter = counter + 1
 
+    remaining_heroes = hero_on_account
+    for card_in_all_hero_cards in all_hero_cards:
+        if card_in_all_hero_cards in remaining_heroes and counter != count_cards:
+            counter = counter + 1
+            remaining_heroes.remove(card_in_all_hero_cards)
+
+    remaining_artifacts = artifact_on_account
     for card_in_all_artifact_cards in all_artifact_cards:
-        for card_artifact_on_account in artifact_on_account:
-            if card_in_all_artifact_cards == card_artifact_on_account and counter != count_cards:
-                counter = counter + 1
+        if card_in_all_artifact_cards in remaining_artifacts and counter != count_cards:
+            counter = counter + 1
+            remaining_artifacts.remove(card_in_all_artifact_cards)
     if counter == count_cards:
+        remaining_heroes.extend(all_hero_cards)
+        remaining_artifacts.extend(all_artifact_cards)
         return True
 
 
@@ -64,9 +69,7 @@ def search_gameaccounts(hero_names: list, artifact_names: list, gameaccounts: di
     content = []
 
     for gameaccount in gameaccounts:
-        heroes, artifacts = gameaccount['heroes'], gameaccount['artifacts']
-        result = _find_match_account(all_hero, all_artifact, heroes, artifacts)
-        if result:
+        if _find_match_account(all_hero, all_artifact, gameaccount['heroes'], gameaccount['artifacts']):
             content.append(gameaccount)
 
     content = _sort_gameaccounts(content)
