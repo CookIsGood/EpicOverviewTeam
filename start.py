@@ -21,11 +21,11 @@ from datetime import datetime
 import os.path
 import json
 import ast
-from config import email, password2, SECRET_KEY, URL_safe, admin_email, admin_password
+import os
 
 
 class Config:
-    SECRET_KEY = SECRET_KEY
+    SECRET_KEY = os.getenv('SECRET_KEY')
     SQLALCHEMY_DATABASE_URI = 'postgresql://admin:123@localhost/testflask'
     DEBUG_TB_ENABLED = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -37,12 +37,11 @@ class Config:
     MAIL_PORT = 465
     MAIL_USE_TLS = False
     MAIL_USE_SSL = True
-    MAIL_USERNAME = email
-    MAIL_DEFAULT_SENDER = email
-    MAIL_PASSWORD = password2
+    MAIL_USERNAME = os.getenv('EMAIL')
+    MAIL_DEFAULT_SENDER = os.getenv('EMAIL')
+    MAIL_PASSWORD = os.getenv('PASSWORD')
 
     CACHE_TYPE = 'simple'
-
 
 ALLOWED_EXTENSIONS = {'jpg'}
 cache = Cache()
@@ -55,7 +54,7 @@ migrate = Migrate(application, db)
 cache.init_app(application)
 manager = LoginManager(application)
 mail = Mail(application)
-s = URLSafeTimedSerializer(URL_safe)
+s = URLSafeTimedSerializer(os.getenv('URL_SAFE'))
 
 from routes import *
 

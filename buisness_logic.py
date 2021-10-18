@@ -18,33 +18,42 @@ def get_requested_page_or_home_page(request, session_name: str = 'requested_page
     return url_for(home_page_functions)
 
 
-def find_matches(all_cards, cards_on_account):
-    """This function counts the number of matches between all cards and cards on the game account
+def _find_match_account(all_hero_cards, all_artifact_cards, hero_on_account, artifact_on_account):
+    """This function checks if the selected heroes/artifacts have on the game account.
 
-    :param all_cards: all cards in which it is necessary to find a match
-    :param cards_on_account: cards that are on the account
+    :param all_hero_cards: selected_heroes
+    :param all_artifact_cards: selected artifacts
+    :param hero_on_account: heroes on the game account
+    :param artifact_on_account: artifacts on the game account
     :return:
     """
     counter = 0
-    for card_in_all_cards in all_cards:
-        for card_on_account in cards_on_account:
-            if card_in_all_cards == card_on_account:
-                counter += 1
-    return counter
+    count_cards = len(all_hero_cards) + len(all_artifact_cards)
+    for card_in_all_hero_cards in all_hero_cards:
+        for card_hero_on_account in hero_on_account:
+            if card_in_all_hero_cards == card_hero_on_account and counter != count_cards:
+                counter = counter + 1
+
+    for card_in_all_artifact_cards in all_artifact_cards:
+        for card_artifact_on_account in artifact_on_account:
+            if card_in_all_artifact_cards == card_artifact_on_account and counter != count_cards:
+                counter = counter + 1
+    if counter == count_cards:
+        return True
 
 
-def sort_gameaccounts(content: list):
+def _sort_gameaccounts(content: list):
     """This function sorts the list of dictionaries by the value of the matches key.
 
     :param content: list of dictionaries to be sorted
     :return:
     """
-    new_content = sorted(content, key=lambda k: k['matches'], reverse=True)
+    new_content = sorted(content, key=lambda k: k['rate'], reverse=True)
     return new_content
 
 
 def search_gameaccounts(hero_names: list, artifact_names: list, gameaccounts: dict):
-    """This function searches and displays game accounts in descending order of matches
+    """This function displays the game account if it finds the selected heroes of the facts in descending order of rating
 
     :param hero_names: user selected heroes
     :param artifact_names: user selected artifacts
@@ -56,11 +65,11 @@ def search_gameaccounts(hero_names: list, artifact_names: list, gameaccounts: di
 
     for gameaccount in gameaccounts:
         heroes, artifacts = gameaccount['heroes'], gameaccount['artifacts']
-        if find_matches(all_hero, heroes) + find_matches(all_artifact, artifacts) != 0:
-            gameaccount['matches'] = find_matches(all_hero, heroes) + find_matches(all_artifact, artifacts)
+        result = _find_match_account(all_hero, all_artifact, heroes, artifacts)
+        if result:
             content.append(gameaccount)
 
-    content = sort_gameaccounts(content)
+    content = _sort_gameaccounts(content)
     return content
 
 
@@ -95,7 +104,7 @@ def calculate_game_account_rate(heroes, parse_heroes):
     return round(rate, 3)
 
 
-def allowed_file(filename):
+def _allowed_file(filename):
     """Checking for a valid extension
 
     :param filename: filename to check for valid extensions
@@ -105,7 +114,7 @@ def allowed_file(filename):
            filename.rsplit('.', 1)[1] in ALLOWED_EXTENSIONS
 
 
-def check_size_img(filename):
+def _check_size_img(filename):
     """Checks the dimensions of an image
 
     :param filename: the name of the file for which you want to check the extension
@@ -132,11 +141,11 @@ def upload_img(file, entered_name):
     :param entered_name: the name to assign to the file
     :return:
     """
-    if file and allowed_file(file.filename):
+    if file and _allowed_file(file.filename):
         file.filename = entered_name + '.jpg'
         filename = secure_filename(file.filename)
         file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
-        if check_size_img(filename):
+        if _check_size_img(filename):
             return True
         else:
             flash('Image dimensions do not fit')

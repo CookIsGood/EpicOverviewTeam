@@ -76,8 +76,9 @@ class User(AbstUser, db.Model, UserMixin):
 
         :return:
         """
-        if not self.query.filter_by(email=admin_email).first():
-            user = User(email=admin_email, login='admin', password=generate_password_hash(admin_password),
+        if not self.query.filter_by(email=os.getenv('ADMIN_EMAIL')).first():
+            user = User(email=os.getenv('ADMIN_EMAIL'), login='admin',
+                        password=generate_password_hash(os.getenv('ADMIN_PASSWORD')),
                         discord_nickname='key#8211')
             db.session.add(user)
             db.session.commit()

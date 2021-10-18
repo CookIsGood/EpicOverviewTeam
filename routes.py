@@ -96,7 +96,8 @@ def contact_us():
         message = form.message.data
         user = User.query.filter_by(email=user_email, id=current_user.get_id()).first()
         if user:
-            msg_for_recipients = Message('Problems found!', sender=email, recipients=[admin_email])
+            msg_for_recipients = Message('Problems found!', sender=os.getenv('EMAIL'),
+                                         recipients=[os.getenv('ADMIN_EMAIL')])
             msg_for_recipients.body = f'Request for improvement content fix!\n' \
                                       f'Discord: {discord}\n' \
                                       f'Email: {user_email}\n' \
@@ -123,7 +124,7 @@ def forgot_password():
                 token = s.dumps({'email': email,
                                  'password': password},
                                 salt='confirm-change-password')
-                msg = Message('Confirm change password', sender=email, recipients=[email])
+                msg = Message('Confirm change password', sender=os.getenv('EMAIL'), recipients=[email])
                 link = url_for('forgot_password_confirm', token=token, _external=True)
                 msg.body = f'Your link is {link}'
                 mail.send(msg)
@@ -190,7 +191,7 @@ def change_hero_data():
                 if request.form['actionCard'] == 'DeleteCard':
                     token = s.dumps({'name': name[0], },
                                     salt='confirm-delete-hero')
-                    msg = Message('Confirm delete hero', sender=email, recipients=[user.email])
+                    msg = Message('Confirm delete hero', sender=os.getenv('EMAIL'), recipients=[user.email])
                     link = url_for('delete_hero_confirm', token=token, _external=True)
                     msg.body = f'Name hero for delete: {name[0]}\n' \
                                f'Please double-check the correctness of the entered data! \nIf you notice that the data ' \
@@ -232,7 +233,7 @@ def change_artifact_data():
                 if request.form['actionCard'] == 'DeleteCard':
                     token = s.dumps({'name': name[0],},
                                     salt='confirm-delete-artifact')
-                    msg = Message('Confirm delete artifact', sender=email, recipients=[user.email])
+                    msg = Message('Confirm delete artifact', sender=os.getenv('EMAIL'), recipients=[user.email])
                     link = url_for('delete_artifact_confirm', token=token, _external=True)
                     msg.body = f'Name artifact for delete: {name[0]}\n' \
                                f'Please double-check the correctness of the entered data! \nIf you notice that the data ' \
@@ -291,7 +292,7 @@ def update_hero(name_hero):
                              'element': element,
                              'classes': classes},
                             salt='confirm-update-hero')
-            msg = Message('Confirm update hero', sender=email, recipients=[user.email])
+            msg = Message('Confirm update hero', sender=os.getenv('EMAIL'), recipients=[user.email])
             link = url_for('update_hero_confirm', token=token, _external=True)
             msg.body = f'New hero name: {name}\n' \
                        f'Number of stars: {star}\n'\
@@ -344,7 +345,7 @@ def update_artifact(name_artifact):
                              'user': user.login,
                              'classes': classes},
                             salt='confirm-update-artifact')
-            msg = Message('Confirm update artifact', sender=email, recipients=[user.email])
+            msg = Message('Confirm update artifact', sender=os.getenv('EMAIL'), recipients=[user.email])
             link = url_for('update_artifact_confirm', token=token, _external=True)
             msg.body = f'New artifact name: {name}\n' \
                        f'Number of stars: {star}\n' \
@@ -392,7 +393,7 @@ def create_hero():
                              'element': element,
                              'classes': classes},
                             salt='confirm-create-hero')
-            msg = Message('Confirm create hero', sender=email, recipients=[user.email])
+            msg = Message('Confirm create hero', sender=os.getenv('EMAIL'), recipients=[user.email])
             link = url_for('create_hero_confirm', token=token, _external=True)
             msg.body = f'New character name: {name}\n' \
                        f'Number of stars: {star}\n' \
@@ -439,7 +440,7 @@ def create_artifact():
                              'user': user.login,
                              'classes': classes},
                             salt='confirm-create-artifact')
-            msg = Message('Confirm create artifact', sender=email, recipients=[user.email])
+            msg = Message('Confirm create artifact', sender=os.getenv('EMAIL'), recipients=[user.email])
             link = url_for('create_artifact_confirm', token=token, _external=True)
             msg.body = f'New artifact name: {name}\n' \
                        f'Number of stars: {star}\n' \
@@ -706,7 +707,7 @@ def signup():
                              'login': login,
                              'password': password},
                             salt='confirm-signup')
-            msg = Message('Confirm your email address', sender=email, recipients=[email])
+            msg = Message('Confirm your email address', sender=os.getenv('EMAIL'), recipients=[email])
             link = url_for('confirm_signup', token=token, _external=True)
             msg.body = f'Your link is {link}'
             mail.send(msg)
@@ -907,7 +908,7 @@ def deleteGameAccount(user_login, name_account):
             token = s.dumps({'login': user.login,
                              'name': name},
                             salt='confirm-delete')
-            msg = Message(f'Confirm delete account {name}', sender=email, recipients=[user.email])
+            msg = Message(f'Confirm delete account {name}', sender=os.getenv('EMAIL'), recipients=[user.email])
             link = url_for('deleteGameAccount_confirm', token=token, _external=True)
             msg.body = f'Your link is {link}'
             mail.send(msg)

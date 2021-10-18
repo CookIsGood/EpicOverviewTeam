@@ -40,11 +40,13 @@ This project contains standard features that you expect when buying or putting u
     
 -   Step 2: Install the requirements: `pip install -r requirements.txt`
 
--   Step 3: Also write to the a file config.py that mail (gmail.com ) from which it is necessary to send emails. For example: email, password2 = "youremail@gmail.com", "yourpassword"
-
--   Step 4: Write the following data to the config.py file: 
-    -  SECRET_KEY, URL_safe = 'yoursecretkey', 'yoururlsafe'
-    -  admin_email, admin_password = "youremail", "yourpassword"
+-   Step 3: It is necessary to fill in the environment variables, namely:
+    - `EMAIL` — Email address from which the mailing will be carried out
+    - `PASSWORD` - Password from the email address from which the mailing will be carried out
+    - `SECRET_KEY` - Secret key for encrypting cookies
+    - `URL_SAFE` - Secret key for secure URL serialization
+    - `ADMIN_EMAIL` - Email address of the user who will be given superuser rights (can be the same as `EMAIL`)
+    - `ADMIN_PASSWORD` - Account password on the site
     
 -   Step 5: Go to this app's directory and run `python start.py`
 
