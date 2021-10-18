@@ -47,6 +47,7 @@ This project contains standard features that you expect when buying or putting u
     - `URL_SAFE` - Secret key for secure URL serialization
     - `ADMIN_EMAIL` - Email address of the user who will be given superuser rights (can be the same as `EMAIL`)
     - `ADMIN_PASSWORD` - Account password on the site
+    - `DB_URL` - Connecting to your database
     
 -   Step 4: Go to this app's directory and run `python start.py`
 
