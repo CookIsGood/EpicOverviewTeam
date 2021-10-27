@@ -36,20 +36,21 @@ This project contains standard features that you expect when buying or putting u
 
 
 ## [](https://github.com/CookIsGood/epicoverviewteam#howtorun)How to Run
--   Step 1: Make sure you have Python 3.8
+- Step 1: Make sure you have Python 3.8
     
--   Step 2: Install the requirements: `pip install -r requirements.txt`
+- Step 2: Install the requirements: `pip install -r requirements.txt`
 
--   Step 3: It is necessary to fill in the environment variables, namely:
+- Step 3: It is necessary to fill in the environment variables, namely:
     - `EMAIL` — Email address from which the mailing will be carried out
     - `PASSWORD` - Password from the email address from which the mailing will be carried out
     - `SECRET_KEY` - Secret key for encrypting cookies
     - `URL_SAFE` - Secret key for secure URL serialization
     - `ADMIN_EMAIL` - Email address of the user who will be given superuser rights (can be the same as `EMAIL`)
     - `ADMIN_PASSWORD` - Account password on the site
-    - `DB_URL` - Connecting to your database
-    
--   Step 4: Go to this app's directory and run `python start.py`
+
+- Step 4: The use of Docker-compose is shown below. Pre-fill the environment variables mentioned above in Dockerfile and go to this app's directory.
+
+  - `docker-compose up --build epic-team-app`
 
 ## [](https://github.com/CookIsGood/epicoverviewteam#development)Development
 Want to contribute? Great!

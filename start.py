@@ -26,7 +26,7 @@ import os
 
 class Config:
     SECRET_KEY = os.getenv('SECRET_KEY')
-    SQLALCHEMY_DATABASE_URI = os.getenv('DB_URL')
+    SQLALCHEMY_DATABASE_URI = f'postgresql://postgres:{os.getenv("DB_PASSWORD")}@db/postgres'
     DEBUG_TB_ENABLED = True
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
@@ -59,4 +59,4 @@ s = URLSafeTimedSerializer(os.getenv('URL_SAFE'))
 from routes import *
 
 if __name__ == '__main__':
-    application.run(debug=True)
+    application.run(debug=True, host='0.0.0.0')
