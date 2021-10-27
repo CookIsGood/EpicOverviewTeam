@@ -1,11 +1,11 @@
 class ExistingLogin(Exception):
-    print('Такой логин уже существует!')
+    print('This login already exists!')
 
 class DataNotMatch(Exception):
-    print('Данные не совпадают')
+    print('The data does not match!')
 
 class NotEnoughRights(Exception):
-    print('У вас не хватает прав для этого действия')
+    print('You do not have enough rights for this action!')
 
 class InvalidNumberCharacters(Exception):
-    print("Неверное количество символов")
+    print("Invalid number of characters!")
