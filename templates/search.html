@@ -1,0 +1,214 @@
+{% extends 'base_template/base.html' %}
+
+{% block title %}
+    <title>Search</title>
+{% endblock %}
+
+{% block links %}
+    <link href="{{ url_for('static', filename='css/search.css') }}" rel="stylesheet" />
+{% endblock %}
+
+{% block content %}
+
+    <div id="all-heroes" data='{{ all_heroes|tojson }}'>...</div>
+    <div id="all-artifacts" data='{{ all_artifacts|tojson }}'>...</div>
+    <section class="py-5">
+        <div class="container mt-5">
+            {% for msg in get_flashed_messages() %}
+        {% if msg %}
+        <div class="container mb-3 mt-3 py-2">
+        <div class="alert alert-info py-2" role="alert">
+            {{ msg }}
+        </div>
+        </div>
+        {% endif %}
+        {% endfor %}
+            <div class="row">
+                <div class="col-lg-8">
+                    <article>
+                        <!-- Post header-->
+                        <header class="mb-4">
+                            <!-- Post title-->
+                            <h1 class="fw-bolder mb-1">Search board</h1>
+                            <!-- Post meta content-->
+                        </header>
+                        <!-- Post content-->
+                        <section class="mb-2">
+                            <p class="fs-5 mb-4">This page is for you to select the cards you want,
+                                and then for you to search through the available game account with the available cards.</p>
+                        </section>
+                    </article>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="container mb-3 mt-3 py-3">
+            <div>
+                <p>
+                    <a id='heroes' class="button-5" data-bs-toggle="collapse" href="#star-choose" role="button"
+                       aria-expanded="false"
+                       aria-controls="collapseExample">
+                        Heroes
+                    </a>
+                    <a id="artifacts" class="button-5" data-bs-toggle="collapse" href="#star-choose"
+                       role="button"
+                       aria-expanded="false"
+                       aria-controls="collapseExample">
+                        Artifacts
+                    </a>
+
+                </p>
+            </div>
+            <div class="collapse" id="star-choose">
+
+                <div class="card card-body">
+
+                    <div>
+                        <a id='all-stars' class="m-2 btn btn-primary" data-bs-toggle="collapse"
+                           href="#output"
+                           role="button"
+                           aria-expanded="false"
+                           aria-controls="collapseExample">
+                            All stars
+                        </a>
+                        <a id='no-stars' class="m-2 btn btn-primary" data-bs-toggle="collapse"
+                           href="#output"
+                           role="button"
+                           aria-expanded="false"
+                           aria-controls="collapseExample">
+                            No stars
+                        </a>
+                        <label class="m-2 btn btn-primary">
+                            <input id='5-star' class="" type="checkbox" name="myradio" value="" checked>
+                            <span class="form-check-label">5*</span>
+                        </label>
+                        <label class="m-2 btn btn-primary">
+                            <input id='4-star' class="" type="checkbox" name="myradio" value="" checked>
+                            <span class="form-check-label">4*</span>
+                        </label>
+
+
+                        <div class="my-2">
+                            <a id='all-elements' class="m-2 btn btn-primary" data-bs-toggle="collapse"
+                               href="#output"
+                               role="button"
+                               aria-expanded="false"
+                               aria-controls="collapseExample">
+                                All elements
+                            </a>
+                            <a id='no-elements' class="m-2 btn btn-primary" data-bs-toggle="collapse"
+                               href="#output"
+                               role="button"
+                               aria-expanded="false"
+                               aria-controls="collapseExample">
+                                No elements
+                            </a>
+                            <label class="m-2 btn btn-primary">
+                                <input id='fire-element' class="" type="checkbox" name="myradio" value="" checked>
+                                <span class="form-check-label">Fire Element</span>
+                            </label>
+                            <label class="m-2 btn btn-primary">
+                                <input id='ice-element' class="" type="checkbox" name="myradio" value="" checked>
+                                <span class="form-check-label">Ice Element</span>
+                            </label>
+                            <label class="m-2 btn btn-primary">
+                                <input id='earth-element' class="" type="checkbox" name="myradio" value="" checked>
+                                <span class="form-check-label">Earth Element</span>
+                            </label>
+
+                            <label class="m-2 btn btn-primary">
+                                <input id='light-element' class="" type="checkbox" name="myradio" value="" checked>
+                                <span class="form-check-label">Light Element</span>
+                            </label>
+                            <label class="m-2 btn btn-primary">
+                                <input id='dark-element' class="" type="checkbox" name="myradio" value="" checked>
+                                <span class="form-check-label">Dark-element</span>
+                            </label>
+
+
+                        </div>
+                        <div class="my-2">
+                            <a id='all-classes' class="m-2 btn btn-primary" data-bs-toggle="collapse"
+                               role="button"
+                               aria-expanded="false"
+                               aria-controls="collapseExample">
+                                All classes
+                            </a>
+                            <a id='no-classes' class="m-2 btn btn-primary" data-bs-toggle="collapse"
+                               role="button"
+                               aria-expanded="false"
+                               aria-controls="collapseExample">
+                                No classes
+                            </a>
+                            <label class="m-2 btn btn-primary">
+                                <input id='knight-class' class="" type="checkbox" name="myradio" value="" checked>
+                                <span class="form-check-label">Knight class</span>
+                            </label>
+                            <label class="m-2 btn btn-primary">
+                                <input id='warrior-class' class="" type="checkbox" name="myradio" value="" checked>
+                                <span class="form-check-label">Warrior class</span>
+                            </label>
+                            <label class="m-2 btn btn-primary">
+                                <input id='thief-class' class="" type="checkbox" name="myradio" value="" checked>
+                                <span class="form-check-label">Thief class</span>
+                            </label>
+                            <label class="m-2 btn btn-primary">
+                                <input id='mage-class' class="" type="checkbox" name="myradio" value="" checked>
+                                <span class="form-check-label">Mage class</span>
+                            </label>
+                            <label class="m-2 btn btn-primary">
+                                <input id='soul_weaver-class' class="" type="checkbox" name="myradio" value="" checked>
+                                <span class="form-check-label">Soul-Weaver class</span>
+                            </label>
+                            <label class="m-2 btn btn-primary">
+                                <input id='ranger-class' class="" type="checkbox" name="myradio" value="" checked>
+                                <span class="form-check-label">Ranger class</span>
+                            </label>
+
+
+                        </div>
+                        <div class="my-2" style="display: inline">
+                            <input id="search" class="form-control" type="text" placeholder="Search"
+                                   aria-label="Search">
+
+                        </div>
+
+                    </div>
+
+                    <div class="container my-2 border border-dark rounded" align="center" id="output">
+
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+        <div class="container">
+            <h1 class="fw-bolder mb-1" align="left">Selected</h1>
+
+        </div>
+        <form id="submitForm" action="" method="post" data-parsley-validate="" data-parsley-errors-messages-disabled="true" novalidate="" _lpchecked="1">
+            <div class="bg-primary container mb-3 mt-3 py-5 border border-dark rounded" align="left">
+
+                <div id="selected" align="center">
+
+                </div>
+            </div>
+            <div class="container">
+                <button class="my-3 button-84">
+                    Search!
+                </button>
+            </div>
+        </form>
+    </section>
+
+
+
+{% endblock %}
+
+
+{% block scripts %}
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+{% endblock %}

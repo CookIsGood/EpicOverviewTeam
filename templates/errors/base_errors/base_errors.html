@@ -1,0 +1,32 @@
+{% extends 'base_template/base.html' %}
+
+{% block title %}
+<title>Error</title>
+{% endblock %}
+
+{% block content %}
+
+
+<section class="py-4">
+                <div class="container py-5">
+                    <h1 class="fw-bolder mb-1">Oops! Something went wrong!</h1>
+                    <p class="fs-5 mb-4">Click <a data-bs-toggle="collapse"
+                                                     href="#collapseExample"
+                                                     role="button"
+                                                     aria-expanded="false"
+                                                     aria-controls="collapseExample">here</a>,
+                        to see details.</p>
+                    <div class="collapse" id="collapseExample">
+                    <div class="card card-body">
+
+                                {% block error_text %}
+
+                                {% endblock %}
+                        <p class="fs-5 mb-4"> Please describe the situation that led to the error
+                        <a href="{{ url_for('contact_us') }}">here.</a></p>
+                    </div>
+                    </div>
+                </div>
+            </section>
+
+{% endblock %}

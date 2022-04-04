@@ -1,0 +1,72 @@
+{% extends 'base_template/base.html' %}
+
+{% block title %}
+<title>Login</title>
+{% endblock %}
+
+{% block links %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css"/>
+{% endblock %}
+
+{% block content %}
+
+            <!-- Page content-->
+<section class="py-5">
+    <div class="px-5">
+    <div class="pt-5">
+        <h1 class="text-center"> Sign In </h1>
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-5 mx-auto">
+                        <div class="card card-body">
+                             <form id="submitForm" action="" method="post" data-parsley-validate="" data-parsley-errors-messages-disabled="true" novalidate="" _lpchecked="1">
+                                 {{ form.hidden_tag() }}
+                                 <div class="form-group required">
+                                    <lSabel for="email"> Enter your email </lSabel>
+                                     {{ form.email(class="form-control") }}
+                                </div>
+                                 <div class="form-group required">
+                                <label class="d-flex flex-row align-items-center" for="password"> Enter your password
+                                <a class="ml-auto border-link small-xl" href="{{ url_for('forgot_password') }}"> Forget Password? </a> </label>
+                                {{ form.password(class="form-control") }}
+                                </div>
+                                <div class="form-group mt-4 mb-4">
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="form-check-input" id="exampleCheck1">
+                                        <label class="form-check-label" for="exampleCheck1">Remember me</label>
+
+                                    </div>
+                                </div>
+                                <div class="form-group pt-1">
+                                     {{ form.submit(class="btn btn-primary btn-block") }}
+                                </div>
+                            </form>
+                            <p class="small-xl pt-3 text-center">
+                                <span class="text-muted"> Not a member? </span>
+                                <a href="{{ url_for('signup') }}"> Sign up </a>
+                            </p>
+                            {% for field in form if field.name not in ['csrf_token', 'submit'] %}
+                            {% if field.errors %}
+                            {% for e in field.errors %}
+                            <div class="alert alert-danger py-3" role="alert">
+                                {{ e }}
+                            </div>
+                            {% endfor %}
+                            {% endif %}
+                            {% endfor %}
+
+                            {% for msg in get_flashed_messages() %}
+                            {% if msg %}
+                            <div class="alert alert-info py-3" role="alert">
+                                {{ msg }}
+                            </div>
+                            {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+    </div>
+         </div>
+</section>
+{% endblock %}

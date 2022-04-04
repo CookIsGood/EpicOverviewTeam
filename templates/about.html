@@ -1,0 +1,48 @@
+{% extends 'base_template/base.html' %}
+
+{% block title %}
+<title>About</title>
+{% endblock %}
+
+{% block content %}
+
+
+<section class="py-5 bg-light">
+                <div class="container px-5">
+                    <div class="row justify-content-center">
+                        <div class="col-lg-8 col-xxl-6">
+                            <div class="text-center my-5">
+                                <h1 class="fw-bolder mb-3">Just like you, we, too, are gamers.</h1>
+                                <p class="lead fw-normal text-muted mb-4">We offer the best meta combination that is not available anywhere else in the market to ensure your satisfaction. Fresh starter accounts with the best characters, high in-game resources. Fastest release of most wanted games</p>
+                                <a class="btn btn-primary btn-lg" href="#scroll-target">Read our story</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- About section one-->
+            <section class="py-3 bg-light" id="scroll-target">
+                <div class="container px-5 my-3">
+                    <div class="row gx-5 align-items-center">
+                        <div class="col-lg-6"><img class="img-fluid rounded mb-5 mb-lg-0" src="{{ url_for('static', filename='img/content/silver-blade-aramintha-full.png') }}" alt="..." /></div>
+                        <div class="col-lg-6">
+                            <h2 class="fw-bolder">Our founding</h2>
+                            <p class="lead fw-normal text-muted mb-0">In the earliest industry experience back to 2018, EOT is a world-leading service provider that allows for gamers to safely & secure buy and sell access to multiple different tittles specific in Mobile Gaming.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <!-- About section two-->
+            <section class="py-5">
+                <div class="container px-5 my-5">
+                    <div class="row gx-5 align-items-center">
+                        <div class="col-lg-6 order-first order-lg-last"><img class="img-fluid rounded mb-5 mb-lg-0" src="{{ url_for('static', filename='img/content/Elena-full.png') }}" alt="..." /></div>
+                        <div class="col-lg-6">
+                            <h2 class="fw-bolder">Growth &amp; beyond</h2>
+                            <p class="lead fw-normal text-muted mb-0">Before EOT was created for the sole purpose of safely and secure transactions between buyers and sellers. We have commited ourselves to be industry-standard with overwhelmingly positive feedbacks on Virtual Goods trading.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+{% endblock %}

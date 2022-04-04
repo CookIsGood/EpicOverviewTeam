@@ -1,0 +1,7 @@
+__pycache__/
+.idea/
+config.py
+venv/
+venv
+epicteam/
+epicteam

@@ -1,0 +1,131 @@
+{% extends 'base_template/base.html' %}
+
+{% block title %}
+<title>Profile</title>
+{% endblock %}
+
+{% block links %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.5.2/css/bootstrap.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.1/css/dataTables.bootstrap4.min.css"/>
+{% endblock %}
+
+{% block content %}
+<section class="py-5">
+    <div class="container mb-3 mt-3 py-4">
+
+     <h2>Account information</h2>
+
+        {% for msg in get_flashed_messages() %}
+        {% if msg %}
+        <div class="alert alert-info py-3" role="alert">
+            {{ msg }}
+        </div>
+        {% endif %}
+        {% endfor %}
+
+    {% if content %}
+        {% set all_info = content["user_info"]  %}
+    <p>Email: {{all_info["email"]}}</p>
+        <p>Login: {{all_info["login"]}}</p>
+        <p>
+            Discord: {{ all_info["discord_nickname"] }}
+        </p>
+        <p>Role:
+            {% for item in all_info["roles"]%}
+            {{item}}
+            {% endfor %}
+        </p>
+        <p>
+            Statuses:
+            {% for item in all_info["statuses"]%}
+            {{item}}
+            {% endfor %}
+        </p>
+        <p>Created: {{all_info["created_at"]}}</p>
+
+    </div>
+    <div class="container mb-3 mt-3 py-1">
+        <div class="row justify-content-end">
+            <div class="col-auto">
+            <form method="get" action="{{ url_for('create_game_account_form', user_login = user_login) }}">
+                <button class="btn btn-success px-10 me-sm-10" type="submit" name="createButton">Create game account</button>
+            </form>
+        </div>
+            <div class="col-auto">
+            <form method="get" action="{{ url_for('change_discord', user_login = user_login) }}">
+                <button class="btn btn-warning px-10 me-sm-10" type="submit" name="changeButton">Change discord</button>
+            </form>
+        </div>
+        {% for item in all_info["roles"]%}
+            {% if item == 'Admin' %}
+
+        <div class="col-auto">
+            <form method="post" action="{{ url_for('admin_login') }}">
+                <button class="btn btn-warning px-10 me-sm-10" type="submit">Admin panel</button>
+            </form>
+        </div>
+            {% endif %}
+            {% endfor %}
+        {% endif %}
+        <div class="col-auto">
+            <form method="post" action="/logout/">
+                <button class="btn btn-danger px-10 me-sm-10" id="logout" type="submit" name="logout">Logout</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+    <div class="container mb-3 mt-3">
+        <table class="table table-bordered myDataTableForProfile" style="width:100%">
+            <thead>
+                <tr>
+                    <th scope="col"></th>
+                   <th scope="col">Name</th>
+                    <th scope="col">Garaunt Rolls</th>
+                    <th scope="col">Rate</th>
+                    <th scope="col">Price ($)</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Last update</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% if content %}
+            {% for gameaccount_info in content["gameaccounts_info"] %}
+            <tr>
+               <td> <a class="btn btn-info" href="{{ url_for('profile_account', user_login = user_login, name_account = gameaccount_info['name']) }}">More info</a></td>
+                <td>{{ gameaccount_info['name'] }}</td>
+                <td>{{ gameaccount_info["garaunteed_roll"] }}</td>
+                <td>{{ gameaccount_info["rate"] }}</td>
+                <td>{{ gameaccount_info["price"] }}</td>
+                <td>{{ gameaccount_info["status_code"] }}</td>
+                <td>{{ gameaccount_info["last_update"] }}</td>
+            </tr>
+            {% endfor %}
+            {% endif %}
+            </tbody>
+        </table>
+    </div>
+
+</section>
+
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+        <script src="https://cdn.datatables.net/1.11.1/js/jquery.dataTables.min.js"></script>
+        <script src="https://cdn.datatables.net/1.11.1/js/dataTables.bootstrap5.min.js"></script>
+<script>
+                $('.myDataTableForProfile').DataTable({
+                scrollY: 500,
+                scrollX: true,
+                scrollCollapse: true,
+                lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "All"]],
+               });
+        </script>
+{% endblock %}
+
+
+
+
