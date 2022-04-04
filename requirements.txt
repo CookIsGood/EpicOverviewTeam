@@ -67,7 +67,7 @@ tqdm==4.62.3
 typing-extensions
 w3lib==1.22.0
 websockets==9.1
-Werkzeug
+Werkzeug==2.0.0
 win-inet-pton
 win32-setctime==1.0.3
 wincertstore==0.2

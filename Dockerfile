@@ -7,12 +7,12 @@ RUN mkdir /app
 COPY . /app/
 WORKDIR /app
 
-ENV EMAIL=""
-ENV PASSWORD=""
-ENV ADMIN_EMAIL=""
-ENV ADMIN_PASSWORD=""
-ENV URL_SAFE=""
-ENV SECRET_KEY=""
+ENV EMAIL="EpicTeamSite@gmail.com"
+ENV PASSWORD="Hgm87nDc9"
+ENV ADMIN_EMAIL="Morkovo4ka513@yandex.ru"
+ENV ADMIN_PASSWORD="admin54321"
+ENV URL_SAFE="Nds862lD"
+ENV SECRET_KEY="DSdskn278dsH"
 ENV FLASK_APP=start.py
 
 RUN pip install --upgrade pip

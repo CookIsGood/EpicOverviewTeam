@@ -1,0 +1,6 @@
+EMAIL = 'EpicTeamSite@gmail.com'
+PASSWORD = 'Hgm87nDc9'
+SECRET_KEY = 'DSdskn278dsH'
+URL_SAFE = 'Nds862lD'
+ADMIN_EMAIL = 'Morkovo4ka513@yandex.ru'
+ADMIN_PASSWORD = 'admin54321'
